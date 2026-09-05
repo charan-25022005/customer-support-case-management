@@ -161,29 +161,36 @@ export default class CaseManagement extends LightningElement {
     }
 
     get selectedCaseResolutionSummary() {
-        return (this.selectedCase && this.selectedCase.Resolution_Summary__c && this.selectedCase.Resolution_Summary__c.trim())
+        if (!this.selectedCase) return 'Historical Case';
+        return (this.selectedCase.Resolution_Summary__c && this.selectedCase.Resolution_Summary__c.trim())
             ? this.selectedCase.Resolution_Summary__c
-            : 'Not available';
+            : 'Historical Case';
     }
 
     get selectedCaseResolutionNotes() {
-        return (this.selectedCase && this.selectedCase.Resolution_Notes__c && this.selectedCase.Resolution_Notes__c.trim()) 
+        if (!this.selectedCase) return 'Resolution details were not captured when this Case was originally closed.';
+        return (this.selectedCase.Resolution_Notes__c && this.selectedCase.Resolution_Notes__c.trim()) 
             ? this.selectedCase.Resolution_Notes__c 
-            : null;
+            : 'Resolution details were not captured when this Case was originally closed.';
     }
 
     get selectedCaseResolvedByName() {
-        return (this.selectedCase && this.selectedCase.Resolved_By__r && this.selectedCase.Resolved_By__r.Name)
-            ? this.selectedCase.Resolved_By__r.Name
-            : (this.selectedCaseOwnerName || 'System User');
+        if (!this.selectedCase) return 'Not available';
+        if (this.selectedCase.Resolved_By__r && this.selectedCase.Resolved_By__r.Name) {
+            return this.selectedCase.Resolved_By__r.Name;
+        }
+        if (this.selectedCase.Owner && this.selectedCase.Owner.Name) {
+            return this.selectedCase.Owner.Name;
+        }
+        return 'Not available';
     }
 
     get selectedCaseResolvedDateFormatted() {
-        if (!this.selectedCase || !this.selectedCase.Resolved_Date__c) {
-            return 'Not available';
-        }
+        if (!this.selectedCase) return 'Not available';
+        const rawDate = this.selectedCase.Resolved_Date__c || this.selectedCase.ClosedDate;
+        if (!rawDate) return 'Not available';
         try {
-            const dt = new Date(this.selectedCase.Resolved_Date__c);
+            const dt = new Date(rawDate);
             return dt.toLocaleString('en-US', {
                 day: '2-digit',
                 month: 'short',
@@ -193,7 +200,7 @@ export default class CaseManagement extends LightningElement {
                 hour12: true
             });
         } catch (e) {
-            return this.selectedCase.Resolved_Date__c;
+            return rawDate;
         }
     }
 

@@ -123,7 +123,7 @@ public with sharing class CaseService {
             return null;
         }
         return [
-            SELECT Id, CaseNumber, Subject, Description, Priority, Status, Origin, Is_VIP__c, External_Case_Id__c, Customer_External_Id__c, Resolution_Summary__c, Resolution_Notes__c, Resolved_By__c, Resolved_By__r.Name, Resolved_Date__c, CreatedDate, LastModifiedDate, ContactId, Contact.Name, Contact.Email, Contact.Phone, AccountId, Account.Name, OwnerId, Owner.Name
+            SELECT Id, CaseNumber, Subject, Description, Priority, Status, Origin, Is_VIP__c, External_Case_Id__c, Customer_External_Id__c, Resolution_Summary__c, Resolution_Notes__c, Resolved_By__c, Resolved_By__r.Name, Resolved_Date__c, CreatedDate, ClosedDate, LastModifiedDate, ContactId, Contact.Name, Contact.Email, Contact.Phone, AccountId, Account.Name, OwnerId, Owner.Name
             FROM Case
             WHERE Id = :caseId
             WITH SECURITY_ENFORCED
