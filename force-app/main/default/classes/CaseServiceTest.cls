@@ -171,4 +171,49 @@ private class CaseServiceTest {
 
         System.assertEquals(u.Id, reassigned.OwnerId);
     }
+
+    @isTest
+    static void testUpdateCaseStatusClosedSuccess() {
+        User tUser = getTestUser();
+        Case c = new Case(
+            Subject = 'Resolution Note Test Case',
+            Priority = 'Medium',
+            Status = 'New'
+        );
+        insert c;
+
+        Case closedCase;
+        Test.startTest();
+        System.runAs(tUser) {
+            closedCase = CaseService.updateCaseStatus(c.Id, 'Closed', 'Generator issue fixed — faulty capacitor replaced.');
+        }
+        Test.stopTest();
+
+        System.assertEquals('Closed', closedCase.Status);
+        System.assertEquals('Generator issue fixed — faulty capacitor replaced.', closedCase.Resolution_Notes__c);
+    }
+
+    @isTest
+    static void testUpdateCaseStatusClosedBlankNotesException() {
+        User tUser = getTestUser();
+        Case c = new Case(
+            Subject = 'Resolution Note Blank Test Case',
+            Priority = 'Medium',
+            Status = 'New'
+        );
+        insert c;
+
+        Boolean exceptionThrown = false;
+        Test.startTest();
+        System.runAs(tUser) {
+            try {
+                CaseService.updateCaseStatus(c.Id, 'Closed', '   ');
+            } catch (AuraHandledException e) {
+                exceptionThrown = true;
+            }
+        }
+        Test.stopTest();
+
+        System.assertEquals(true, exceptionThrown, 'AuraHandledException should be thrown when resolution notes are blank on closing');
+    }
 }

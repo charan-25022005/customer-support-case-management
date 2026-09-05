@@ -133,6 +133,10 @@
                                         <strong>Description:</strong>
                                         <p class="description-box">{selectedCase.Description}</p>
                                     </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-var-m-bottom_small">
+                                        <strong>Resolution Notes:</strong>
+                                        <p class="description-box resolution-box">{selectedCaseResolutionNotes}</p>
+                                    </div>
                                 </div>
                             </lightning-tab>
 
@@ -153,6 +157,39 @@
                     </div>
                     <footer class="slds-modal__footer">
                         <lightning-button label="Close" variant="neutral" onclick={closeModal}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+
+        <!-- Close Case Modal Prompt -->
+        <template if:true={isCloseModalOpen}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-labelledby="modal-heading-02" aria-modal="true">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeCloseModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse" size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-02" class="slds-modal__title slds-hyphenate">
+                            Close Case & Provide Resolution Notes
+                        </h2>
+                    </header>
+                    <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-2">
+                        <lightning-textarea
+                            name="resolutionNotes"
+                            label="Resolution Notes"
+                            placeholder="Describe how the customer's problem was resolved..."
+                            value={resolutionNotesInput}
+                            onchange={handleResolutionNotesChange}
+                            required
+                            class="slds-var-m-bottom_small">
+                        </lightning-textarea>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Cancel" variant="neutral" onclick={closeCloseModal} class="slds-var-m-right_x-small"></lightning-button>
+                        <lightning-button label="Submit & Close Case" variant="brand" onclick={confirmCloseCase}></lightning-button>
                     </footer>
                 </div>
             </section>

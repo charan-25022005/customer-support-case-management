@@ -46,6 +46,9 @@ export default class CaseManagement extends LightningElement {
     @track selectedCase = null;
     @track integrationLogs = [];
     @track isModalOpen = false;
+    @track isCloseModalOpen = false;
+    @track pendingCloseCaseId = null;
+    @track resolutionNotesInput = '';
 
     wiredCasesResult;
 
@@ -97,6 +100,10 @@ export default class CaseManagement extends LightningElement {
         return this.selectedCase && this.selectedCase.Owner ? this.selectedCase.Owner.Name : '';
     }
 
+    get selectedCaseResolutionNotes() {
+        return this.selectedCase && this.selectedCase.Resolution_Notes__c ? this.selectedCase.Resolution_Notes__c : 'No resolution recorded yet.';
+    }
+
     get metrics() {
         let total = this.rawCases.length;
         let open = this.rawCases.filter(c => c.Status !== 'Closed').length;
@@ -134,14 +141,41 @@ export default class CaseManagement extends LightningElement {
                 this.openDetailModal(row.Id, row.External_Case_Id__c);
                 break;
             case 'close_case':
-                this.changeCaseStatus(row.Id, 'Closed');
+                this.openCloseModal(row.Id);
                 break;
             case 'working_case':
-                this.changeCaseStatus(row.Id, 'Working');
+                this.changeCaseStatus(row.Id, 'Working', null);
                 break;
             default:
                 break;
         }
+    }
+
+    openCloseModal(caseId) {
+        this.pendingCloseCaseId = caseId;
+        this.resolutionNotesInput = '';
+        this.isCloseModalOpen = true;
+    }
+
+    closeCloseModal() {
+        this.isCloseModalOpen = false;
+        this.pendingCloseCaseId = null;
+        this.resolutionNotesInput = '';
+    }
+
+    handleResolutionNotesChange(event) {
+        this.resolutionNotesInput = event.target.value;
+    }
+
+    confirmCloseCase() {
+        if (!this.resolutionNotesInput || !this.resolutionNotesInput.trim()) {
+            this.showToast('Error', 'Please enter resolution notes before closing the Case.', 'error');
+            return;
+        }
+        const caseId = this.pendingCloseCaseId;
+        const notes = this.resolutionNotesInput.trim();
+        this.closeCloseModal();
+        this.changeCaseStatus(caseId, 'Closed', notes);
     }
 
     openDetailModal(caseId, externalCaseId) {
@@ -169,9 +203,9 @@ export default class CaseManagement extends LightningElement {
         this.integrationLogs = [];
     }
 
-    changeCaseStatus(caseId, newStatus) {
+    changeCaseStatus(caseId, newStatus, resolutionNotes = null) {
         this.isLoading = true;
-        updateCaseStatus({ caseId: caseId, newStatus: newStatus })
+        updateCaseStatus({ caseId: caseId, newStatus: newStatus, resolutionNotes: resolutionNotes })
             .then(() => {
                 this.showToast('Success', `Case status updated to ${newStatus}`, 'success');
                 return refreshApex(this.wiredCasesResult);

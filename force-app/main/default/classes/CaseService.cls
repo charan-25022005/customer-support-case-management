@@ -123,7 +123,7 @@ public with sharing class CaseService {
             return null;
         }
         return [
-            SELECT Id, CaseNumber, Subject, Description, Priority, Status, Origin, Is_VIP__c, External_Case_Id__c, Customer_External_Id__c, CreatedDate, LastModifiedDate, ContactId, Contact.Name, Contact.Email, Contact.Phone, AccountId, Account.Name, OwnerId, Owner.Name
+            SELECT Id, CaseNumber, Subject, Description, Priority, Status, Origin, Is_VIP__c, External_Case_Id__c, Customer_External_Id__c, Resolution_Notes__c, CreatedDate, LastModifiedDate, ContactId, Contact.Name, Contact.Email, Contact.Phone, AccountId, Account.Name, OwnerId, Owner.Name
             FROM Case
             WHERE Id = :caseId
             WITH SECURITY_ENFORCED
@@ -132,15 +132,25 @@ public with sharing class CaseService {
     }
 
     @AuraEnabled
-    public static Case updateCaseStatus(String caseId, String newStatus) {
+    public static Case updateCaseStatus(String caseId, String newStatus, String resolutionNotes) {
         if (String.isBlank(caseId) || String.isBlank(newStatus)) {
             throw new AuraHandledException('Invalid arguments for updateCaseStatus');
         }
+        if (newStatus != null && newStatus.equalsIgnoreCase('Closed') && String.isBlank(resolutionNotes)) {
+            throw new AuraHandledException('Please enter resolution notes before closing the Case.');
+        }
         Case c = new Case(Id = caseId, Status = newStatus);
+        if (String.isNotBlank(resolutionNotes)) {
+            c.Resolution_Notes__c = resolutionNotes;
+        }
         if (Schema.sObjectType.Case.isUpdateable()) {
             update c;
         }
         return getCaseDetails(caseId);
+    }
+
+    public static Case updateCaseStatus(String caseId, String newStatus) {
+        return updateCaseStatus(caseId, newStatus, null);
     }
 
     @AuraEnabled

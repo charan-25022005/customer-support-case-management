@@ -83,3 +83,8 @@
     margin-top: 4px;
     white-space: pre-wrap;
 }
+
+.resolution-box {
+    background: #eef2ff;
+    border-left: 4px solid #6366f1;
+}

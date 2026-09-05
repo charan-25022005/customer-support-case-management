@@ -38,6 +38,7 @@
         <members>Case.External_Case_Id__c</members>
         <members>Case.Customer_External_Id__c</members>
         <members>Case.Is_VIP__c</members>
+        <members>Case.Resolution_Notes__c</members>
         <members>External_Case__c.External_Case_Id__c</members>
         <members>External_Case__c.Subject__c</members>
         <members>External_Case__c.Description__c</members>
