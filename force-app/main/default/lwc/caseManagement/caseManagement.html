@@ -1,0 +1,162 @@
+<template>
+    <lightning-card title="Customer Support Case Management Dashboard" icon-name="standard:case">
+        <div class="slds-var-p-around_medium header-container">
+            <!-- Summary Metric Cards -->
+            <div class="slds-grid slds-gutters slds-var-m-bottom_medium">
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="metric-card metric-card-total">
+                        <div class="metric-value">{metrics.total}</div>
+                        <div class="metric-label">Total Cases</div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="metric-card metric-card-open">
+                        <div class="metric-value">{metrics.open}</div>
+                        <div class="metric-label">Open Cases</div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="metric-card metric-card-high">
+                        <div class="metric-value">{metrics.highPriority}</div>
+                        <div class="metric-label">High Priority</div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4">
+                    <div class="metric-card metric-card-vip">
+                        <div class="metric-value">{metrics.vip}</div>
+                        <div class="metric-label">VIP Customer Cases</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="slds-grid slds-gutters slds-grid_vertical-align-center slds-var-m-bottom_medium search-bar-container">
+                <div class="slds-col slds-size_4-of-12">
+                    <lightning-input
+                        type="search"
+                        label="Search Cases"
+                        placeholder="Search by Case #, Subject, External ID..."
+                        value={searchTerm}
+                        onchange={handleSearchChange}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_3-of-12">
+                    <lightning-combobox
+                        name="priorityFilter"
+                        label="Priority"
+                        value={priorityFilter}
+                        options={priorityOptions}
+                        onchange={handlePriorityFilterChange}>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_3-of-12">
+                    <lightning-combobox
+                        name="statusFilter"
+                        label="Status"
+                        value={statusFilter}
+                        options={statusOptions}
+                        onchange={handleStatusFilterChange}>
+                    </lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_2-of-12 slds-var-p-top_large">
+                    <lightning-button
+                        label="Refresh"
+                        icon-name="utility:refresh"
+                        variant="neutral"
+                        onclick={handleRefresh}>
+                    </lightning-button>
+                </div>
+            </div>
+
+            <!-- Cases Datatable -->
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading cases..." size="medium"></lightning-spinner>
+            </template>
+
+            <template if:true={hasCases}>
+                <div class="table-container">
+                    <lightning-datatable
+                        key-field="Id"
+                        data={cases}
+                        columns={columns}
+                        onrowaction={handleRowAction}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </div>
+            </template>
+
+            <template if:false={hasCases}>
+                <div class="empty-state slds-text-align_center slds-var-p-around_large">
+                    <lightning-icon icon-name="utility:search" size="large" class="slds-var-m-bottom_small"></lightning-icon>
+                    <p class="slds-text-heading_medium">No Cases Found</p>
+                    <p class="slds-text-color_weak">Try adjusting your search terms or filter criteria.</p>
+                </div>
+            </template>
+        </div>
+
+        <!-- Case Detail & Integration Log Modal -->
+        <template if:true={isModalOpen}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large" aria-labelledby="modal-heading-01" aria-modal="true">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header modal-header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse" size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">
+                            Case Details: {selectedCase.CaseNumber}
+                        </h2>
+                    </header>
+                    <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                        <lightning-tabset>
+                            <lightning-tab label="Overview">
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
+                                        <strong>Subject:</strong> {selectedCase.Subject}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
+                                        <strong>External Case ID:</strong> {selectedCase.External_Case_Id__c}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
+                                        <strong>Priority:</strong> {selectedCase.Priority}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
+                                        <strong>Status:</strong> {selectedCase.Status}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
+                                        <strong>VIP Status:</strong> {selectedCase.Is_VIP__c}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
+                                        <strong>Owner:</strong> {selectedCaseOwnerName}
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-1 slds-var-m-bottom_small">
+                                        <strong>Description:</strong>
+                                        <p class="description-box">{selectedCase.Description}</p>
+                                    </div>
+                                </div>
+                            </lightning-tab>
+
+                            <lightning-tab label="Integration Logs">
+                                <template if:true={hasLogs}>
+                                    <lightning-datatable
+                                        key-field="Id"
+                                        data={integrationLogs}
+                                        columns={logColumns}
+                                        hide-checkbox-column>
+                                    </lightning-datatable>
+                                </template>
+                                <template if:false={hasLogs}>
+                                    <p class="slds-text-align_center slds-var-p-around_medium">No integration logs recorded for this external case.</p>
+                                </template>
+                            </lightning-tab>
+                        </lightning-tabset>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning-button label="Close" variant="neutral" onclick={closeModal}></lightning-button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </lightning-card>
+</template>

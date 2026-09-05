@@ -1,0 +1,85 @@
+.header-container {
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.metric-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #cbd5e1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card-total {
+    border-left-color: #3b82f6;
+}
+
+.metric-card-open {
+    border-left-color: #eab308;
+}
+
+.metric-card-high {
+    border-left-color: #ef4444;
+}
+
+.metric-card-vip {
+    border-left-color: #8b5cf6;
+}
+
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.search-bar-container {
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.table-container {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.empty-state {
+    background: #ffffff;
+    border-radius: 8px;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #ffffff;
+}
+
+.modal-header h2 {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.description-box {
+    background: #f1f5f9;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 4px;
+    white-space: pre-wrap;
+}

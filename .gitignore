@@ -1,0 +1,25 @@
+# Salesforce DX
+.sf/
+.sfdx/
+.localdevserver/
+tools/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment and Secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# System / OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
