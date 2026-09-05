@@ -379,17 +379,40 @@
                                         <div class="modal-section">
                                             <div class="modal-section-label resolution-header-label">
                                                 <lightning-icon icon-name="utility:check" size="x-small" class="section-icon"></lightning-icon>
-                                                <span>✓ RESOLUTION</span>
+                                                <span>✓ CASE RESOLVED</span>
                                             </div>
-                                            <template if:true={selectedCaseResolutionNotes}>
+                                            <template if:true={isCaseClosed}>
                                                 <div class="resolution-card-box success-resolution">
                                                     <div class="resolution-badge-header">
                                                         <span class="resolution-check-badge">✓ Case Resolved</span>
                                                     </div>
-                                                    <p class="resolution-text-body">{selectedCaseResolutionNotes}</p>
+                                                    <div class="resolution-card-grid">
+                                                        <div class="resolution-field-item full-width">
+                                                            <div class="resolution-field-label">Resolution</div>
+                                                            <div class="resolution-field-value-summary">{selectedCaseResolutionSummary}</div>
+                                                        </div>
+                                                        <div class="resolution-field-item full-width">
+                                                            <div class="resolution-field-label">Resolution Notes</div>
+                                                            <div class="resolution-field-value-notes">{selectedCaseResolutionNotes}</div>
+                                                        </div>
+                                                        <div class="resolution-field-item">
+                                                            <div class="resolution-field-label">Resolved By</div>
+                                                            <div class="resolution-field-value-user">
+                                                                <lightning-icon icon-name="utility:user" size="x-small" class="inline-res-icon"></lightning-icon>
+                                                                <span>{selectedCaseResolvedByName}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="resolution-field-item">
+                                                            <div class="resolution-field-label">Resolved Date</div>
+                                                            <div class="resolution-field-value-date">
+                                                                <lightning-icon icon-name="utility:event" size="x-small" class="inline-res-icon"></lightning-icon>
+                                                                <span>{selectedCaseResolvedDateFormatted}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </template>
-                                            <template if:false={selectedCaseResolutionNotes}>
+                                            <template if:false={isCaseClosed}>
                                                 <div class="resolution-card-box empty-resolution">
                                                     <div class="empty-resolution-content">
                                                         <lightning-icon icon-name="utility:info_alt" size="x-small"></lightning-icon>
@@ -463,6 +486,15 @@
                             <p class="modal-hero-subtitle">Document how the customer's issue was resolved.</p>
                         </header>
                         <div class="slds-modal__content slds-var-p-around_large" id="modal-content-id-2">
+                            <lightning-input
+                                name="resolutionSummary"
+                                label="Resolution Summary"
+                                placeholder="Brief summary of resolution..."
+                                value={resolutionSummaryInput}
+                                onchange={handleResolutionSummaryChange}
+                                required
+                                class="slds-var-m-bottom_small">
+                            </lightning-input>
                             <lightning-textarea
                                 name="resolutionNotes"
                                 label="Resolution Notes"

@@ -123,7 +123,7 @@ public with sharing class CaseService {
             return null;
         }
         return [
-            SELECT Id, CaseNumber, Subject, Description, Priority, Status, Origin, Is_VIP__c, External_Case_Id__c, Customer_External_Id__c, Resolution_Notes__c, CreatedDate, LastModifiedDate, ContactId, Contact.Name, Contact.Email, Contact.Phone, AccountId, Account.Name, OwnerId, Owner.Name
+            SELECT Id, CaseNumber, Subject, Description, Priority, Status, Origin, Is_VIP__c, External_Case_Id__c, Customer_External_Id__c, Resolution_Summary__c, Resolution_Notes__c, Resolved_By__c, Resolved_By__r.Name, Resolved_Date__c, CreatedDate, LastModifiedDate, ContactId, Contact.Name, Contact.Email, Contact.Phone, AccountId, Account.Name, OwnerId, Owner.Name
             FROM Case
             WHERE Id = :caseId
             WITH SECURITY_ENFORCED
@@ -132,15 +132,25 @@ public with sharing class CaseService {
     }
 
     @AuraEnabled
-    public static Case updateCaseStatus(String caseId, String newStatus, String resolutionNotes) {
+    public static Case updateCaseStatus(String caseId, String newStatus, String resolutionNotes, String resolutionSummary) {
         if (String.isBlank(caseId) || String.isBlank(newStatus)) {
             throw new AuraHandledException('Invalid arguments for updateCaseStatus');
         }
-        if (newStatus != null && newStatus.equalsIgnoreCase('Closed') && String.isBlank(resolutionNotes)) {
-            throw new AuraHandledException('Please enter resolution notes before closing the Case.');
+        if (newStatus != null && newStatus.equalsIgnoreCase('Closed')) {
+            if (String.isBlank(resolutionSummary) || String.isBlank(resolutionSummary.trim())) {
+                throw new AuraHandledException('Please enter a resolution summary before closing the Case.');
+            }
+            if (String.isBlank(resolutionNotes) || String.isBlank(resolutionNotes.trim())) {
+                throw new AuraHandledException('Please enter resolution notes before closing the Case.');
+            }
         }
         Case c = new Case(Id = caseId, Status = newStatus);
-        if (String.isNotBlank(resolutionNotes)) {
+        if (newStatus != null && newStatus.equalsIgnoreCase('Closed')) {
+            c.Resolution_Summary__c = resolutionSummary.trim();
+            c.Resolution_Notes__c = resolutionNotes.trim();
+            c.Resolved_By__c = UserInfo.getUserId();
+            c.Resolved_Date__c = System.now();
+        } else if (String.isNotBlank(resolutionNotes)) {
             c.Resolution_Notes__c = resolutionNotes;
         }
         if (Schema.sObjectType.Case.isUpdateable()) {
@@ -149,8 +159,12 @@ public with sharing class CaseService {
         return getCaseDetails(caseId);
     }
 
+    public static Case updateCaseStatus(String caseId, String newStatus, String resolutionNotes) {
+        return updateCaseStatus(caseId, newStatus, resolutionNotes, null);
+    }
+
     public static Case updateCaseStatus(String caseId, String newStatus) {
-        return updateCaseStatus(caseId, newStatus, null);
+        return updateCaseStatus(caseId, newStatus, null, null);
     }
 
     @AuraEnabled

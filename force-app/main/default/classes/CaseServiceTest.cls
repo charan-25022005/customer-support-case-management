@@ -185,12 +185,41 @@ private class CaseServiceTest {
         Case closedCase;
         Test.startTest();
         System.runAs(tUser) {
-            closedCase = CaseService.updateCaseStatus(c.Id, 'Closed', 'Generator issue fixed — faulty capacitor replaced.');
+            closedCase = CaseService.updateCaseStatus(c.Id, 'Closed', 'Diagnosed generator issue and replaced capacitor.', 'Generator issue fixed');
         }
         Test.stopTest();
 
         System.assertEquals('Closed', closedCase.Status);
-        System.assertEquals('Generator issue fixed — faulty capacitor replaced.', closedCase.Resolution_Notes__c);
+        System.assertEquals('Generator issue fixed', closedCase.Resolution_Summary__c);
+        System.assertEquals('Diagnosed generator issue and replaced capacitor.', closedCase.Resolution_Notes__c);
+        System.assertEquals(tUser.Id, closedCase.Resolved_By__c);
+        System.assertNotEquals(null, closedCase.Resolved_Date__c);
+    }
+
+    @isTest
+    static void testUpdateCaseStatusClosedBlankSummaryException() {
+        User tUser = getTestUser();
+        Case c = new Case(
+            Subject = 'Resolution Summary Blank Test Case',
+            Priority = 'Medium',
+            Status = 'New'
+        );
+        insert c;
+
+        Boolean exceptionThrown = false;
+        String errorMessage = '';
+        Test.startTest();
+        System.runAs(tUser) {
+            try {
+                CaseService.updateCaseStatus(c.Id, 'Closed', 'Valid notes here', '   ');
+            } catch (AuraHandledException e) {
+                exceptionThrown = true;
+                errorMessage = e.getMessage();
+            }
+        }
+        Test.stopTest();
+
+        System.assertEquals(true, exceptionThrown, 'AuraHandledException should be thrown when resolution summary is blank on closing');
     }
 
     @isTest
@@ -207,7 +236,7 @@ private class CaseServiceTest {
         Test.startTest();
         System.runAs(tUser) {
             try {
-                CaseService.updateCaseStatus(c.Id, 'Closed', '   ');
+                CaseService.updateCaseStatus(c.Id, 'Closed', '   ', 'Valid summary here');
             } catch (AuraHandledException e) {
                 exceptionThrown = true;
             }
@@ -215,5 +244,28 @@ private class CaseServiceTest {
         Test.stopTest();
 
         System.assertEquals(true, exceptionThrown, 'AuraHandledException should be thrown when resolution notes are blank on closing');
+    }
+
+    @isTest
+    static void testSetCaseToInProgressWithoutResolution() {
+        User tUser = getTestUser();
+        Case c = new Case(
+            Subject = 'Working Test Case',
+            Priority = 'Low',
+            Status = 'New'
+        );
+        insert c;
+
+        Case workingCase;
+        Test.startTest();
+        System.runAs(tUser) {
+            workingCase = CaseService.updateCaseStatus(c.Id, 'Working', null, null);
+        }
+        Test.stopTest();
+
+        System.assertEquals('Working', workingCase.Status);
+        System.assertEquals(null, workingCase.Resolution_Summary__c);
+        System.assertEquals(null, workingCase.Resolved_By__c);
+        System.assertEquals(null, workingCase.Resolved_Date__c);
     }
 }

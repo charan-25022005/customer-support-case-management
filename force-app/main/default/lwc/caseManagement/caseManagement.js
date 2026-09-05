@@ -49,6 +49,7 @@ export default class CaseManagement extends LightningElement {
     @track isModalOpen = false;
     @track isCloseModalOpen = false;
     @track pendingCloseCaseId = null;
+    @track resolutionSummaryInput = '';
     @track resolutionNotesInput = '';
 
     @track openMenuRowId = null;
@@ -135,6 +136,10 @@ export default class CaseManagement extends LightningElement {
         return this.formattedLogs && this.formattedLogs.length > 0;
     }
 
+    get isCaseClosed() {
+        return this.selectedCase && this.selectedCase.Status === 'Closed';
+    }
+
     get selectedCaseOwnerName() {
         return this.selectedCase && this.selectedCase.Owner ? this.selectedCase.Owner.Name : 'Unassigned';
     }
@@ -155,10 +160,41 @@ export default class CaseManagement extends LightningElement {
             : 'No description provided.';
     }
 
+    get selectedCaseResolutionSummary() {
+        return (this.selectedCase && this.selectedCase.Resolution_Summary__c && this.selectedCase.Resolution_Summary__c.trim())
+            ? this.selectedCase.Resolution_Summary__c
+            : 'Not available';
+    }
+
     get selectedCaseResolutionNotes() {
         return (this.selectedCase && this.selectedCase.Resolution_Notes__c && this.selectedCase.Resolution_Notes__c.trim()) 
             ? this.selectedCase.Resolution_Notes__c 
             : null;
+    }
+
+    get selectedCaseResolvedByName() {
+        return (this.selectedCase && this.selectedCase.Resolved_By__r && this.selectedCase.Resolved_By__r.Name)
+            ? this.selectedCase.Resolved_By__r.Name
+            : (this.selectedCaseOwnerName || 'System User');
+    }
+
+    get selectedCaseResolvedDateFormatted() {
+        if (!this.selectedCase || !this.selectedCase.Resolved_Date__c) {
+            return 'Not available';
+        }
+        try {
+            const dt = new Date(this.selectedCase.Resolved_Date__c);
+            return dt.toLocaleString('en-US', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (e) {
+            return this.selectedCase.Resolved_Date__c;
+        }
     }
 
     get selectedCaseStatusBadgeClass() {
@@ -236,7 +272,7 @@ export default class CaseManagement extends LightningElement {
                 this.openCloseModal(rowId);
                 break;
             case 'working_case':
-                this.changeCaseStatus(rowId, 'Working', null);
+                this.changeCaseStatus(rowId, 'Working', null, null);
                 break;
             default:
                 break;
@@ -255,7 +291,7 @@ export default class CaseManagement extends LightningElement {
                 this.openCloseModal(row.Id);
                 break;
             case 'working_case':
-                this.changeCaseStatus(row.Id, 'Working', null);
+                this.changeCaseStatus(row.Id, 'Working', null, null);
                 break;
             default:
                 break;
@@ -264,6 +300,7 @@ export default class CaseManagement extends LightningElement {
 
     openCloseModal(caseId) {
         this.pendingCloseCaseId = caseId;
+        this.resolutionSummaryInput = '';
         this.resolutionNotesInput = '';
         this.isCloseModalOpen = true;
     }
@@ -271,7 +308,12 @@ export default class CaseManagement extends LightningElement {
     closeCloseModal() {
         this.isCloseModalOpen = false;
         this.pendingCloseCaseId = null;
+        this.resolutionSummaryInput = '';
         this.resolutionNotesInput = '';
+    }
+
+    handleResolutionSummaryChange(event) {
+        this.resolutionSummaryInput = event.target.value;
     }
 
     handleResolutionNotesChange(event) {
@@ -279,14 +321,19 @@ export default class CaseManagement extends LightningElement {
     }
 
     confirmCloseCase() {
+        if (!this.resolutionSummaryInput || !this.resolutionSummaryInput.trim()) {
+            this.showToast('Error', 'Please enter a resolution summary before closing the Case.', 'error');
+            return;
+        }
         if (!this.resolutionNotesInput || !this.resolutionNotesInput.trim()) {
             this.showToast('Error', 'Please enter resolution notes before closing the Case.', 'error');
             return;
         }
         const caseId = this.pendingCloseCaseId;
+        const summary = this.resolutionSummaryInput.trim();
         const notes = this.resolutionNotesInput.trim();
         this.closeCloseModal();
-        this.changeCaseStatus(caseId, 'Closed', notes);
+        this.changeCaseStatus(caseId, 'Closed', notes, summary);
     }
 
     openDetailModal(caseId, externalCaseId) {
@@ -327,11 +374,14 @@ export default class CaseManagement extends LightningElement {
         this.formattedLogs = [];
     }
 
-    changeCaseStatus(caseId, newStatus, resolutionNotes = null) {
+    changeCaseStatus(caseId, newStatus, resolutionNotes = null, resolutionSummary = null) {
         this.isLoading = true;
-        updateCaseStatus({ caseId: caseId, newStatus: newStatus, resolutionNotes: resolutionNotes })
+        updateCaseStatus({ caseId: caseId, newStatus: newStatus, resolutionNotes: resolutionNotes, resolutionSummary: resolutionSummary })
             .then(() => {
-                this.showToast('Success', `Case status updated to ${newStatus}`, 'success');
+                const toastMsg = newStatus === 'Closed' 
+                    ? 'Case closed successfully with resolution details.' 
+                    : `Case status updated to ${newStatus}`;
+                this.showToast('Success', toastMsg, 'success');
                 return refreshApex(this.wiredCasesResult);
             })
             .catch(error => {

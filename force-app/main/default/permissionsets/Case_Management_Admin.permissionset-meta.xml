@@ -51,6 +51,21 @@
         <field>Case.Resolution_Notes__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Case.Resolution_Summary__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Case.Resolved_By__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Case.Resolved_Date__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <!-- External_Case__c Field Permissions -->
     <fieldPermissions>
         <editable>true</editable>
