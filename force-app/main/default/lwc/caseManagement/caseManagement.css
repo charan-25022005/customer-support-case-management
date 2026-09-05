@@ -1,11 +1,13 @@
-/* Enterprise Customer Support SaaS UI Design System */
+/* Ultra-Premium Enterprise Customer Support SaaS UI Design System */
 
 :host {
-    --bg-app: #f1f5f9;
+    --bg-app: #f8fafc;
     --surface-card: #ffffff;
-    --primary-navy: #0f172a;
-    --primary-indigo: #312e81;
+    --primary-navy: #090d16;
+    --primary-slate: #0f172a;
+    --primary-indigo: #1e1b4b;
     --accent-blue: #2563eb;
+    --accent-blue-hover: #1d4ed8;
     --text-primary: #0f172a;
     --text-secondary: #475569;
     --text-muted: #64748b;
@@ -25,7 +27,7 @@
 .app-wrapper {
     background: var(--bg-app);
     min-height: 100vh;
-    padding: 24px 32px 48px 32px;
+    padding: 24px 36px 48px 36px;
     border-radius: var(--radius-xl);
 }
 
@@ -34,9 +36,9 @@
     margin: 0 auto;
 }
 
-/* Header Hero */
+/* Header Hero Panel */
 .header-hero-panel {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+    background: linear-gradient(135deg, #090d16 0%, #0f172a 40%, #1e1b4b 100%);
     border-radius: var(--radius-xl);
     padding: 28px 36px;
     color: #ffffff;
@@ -51,11 +53,11 @@
 .header-hero-panel::before {
     content: '';
     position: absolute;
-    top: -50px;
-    right: 15%;
-    width: 350px;
-    height: 350px;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
+    top: -60px;
+    right: 12%;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.28) 0%, rgba(0, 0, 0, 0) 70%);
     pointer-events: none;
 }
 
@@ -69,42 +71,42 @@
     width: 56px;
     height: 56px;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
 .header-title-text {
-    font-size: 1.65rem;
+    font-size: 1.7rem;
     font-weight: 800;
     color: #ffffff;
     margin: 0;
-    letter-spacing: -0.025em;
-    line-height: 1.25;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
 }
 
 .header-subtitle-text {
     font-size: 0.9rem;
-    color: #cbd5e1;
+    color: #94a3b8;
     margin-top: 4px;
     font-weight: 400;
 }
 
 .live-support-badge {
     background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-pill);
-    padding: 8px 16px;
+    padding: 8px 18px;
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 0.825rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #ffffff;
 }
 
@@ -133,7 +135,7 @@
 
 .kpi-card {
     background: var(--surface-card);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border-subtle);
     padding: 24px;
     box-shadow: var(--shadow-md);
@@ -155,7 +157,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 5px;
+    height: 4px;
 }
 
 .kpi-total .kpi-top-bar { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
@@ -170,7 +172,7 @@
 }
 
 .kpi-label {
-    font-size: 0.8rem;
+    font-size: 0.775rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -196,7 +198,7 @@
 }
 
 .kpi-number {
-    font-size: 2.4rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: var(--text-primary);
     line-height: 1;
@@ -206,7 +208,7 @@
 .kpi-footer-status {
     font-size: 0.775rem;
     font-weight: 600;
-    margin-top: 8px;
+    margin-top: 10px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -227,11 +229,11 @@
 }
 
 .workspace-title {
-    font-size: 1.35rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 0;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
 }
 
 .workspace-subtitle {
@@ -291,7 +293,7 @@
 /* SaaS Data Grid Table */
 .data-grid-container {
     background: var(--surface-card);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border-subtle);
     box-shadow: var(--shadow-md);
     overflow: visible;
