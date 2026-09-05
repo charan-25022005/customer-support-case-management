@@ -136,11 +136,29 @@ export default class CaseManagement extends LightningElement {
     }
 
     get selectedCaseOwnerName() {
-        return this.selectedCase && this.selectedCase.Owner ? this.selectedCase.Owner.Name : '';
+        return this.selectedCase && this.selectedCase.Owner ? this.selectedCase.Owner.Name : 'Unassigned';
+    }
+
+    get selectedCaseOwnerInitials() {
+        return this.getInitials(this.selectedCaseOwnerName);
+    }
+
+    get selectedCaseExternalIdFormatted() {
+        return (this.selectedCase && this.selectedCase.External_Case_Id__c && this.selectedCase.External_Case_Id__c.trim()) 
+            ? this.selectedCase.External_Case_Id__c 
+            : 'Not available';
+    }
+
+    get selectedCaseDescriptionFormatted() {
+        return (this.selectedCase && this.selectedCase.Description && this.selectedCase.Description.trim()) 
+            ? this.selectedCase.Description 
+            : 'No description provided.';
     }
 
     get selectedCaseResolutionNotes() {
-        return this.selectedCase && this.selectedCase.Resolution_Notes__c ? this.selectedCase.Resolution_Notes__c : null;
+        return (this.selectedCase && this.selectedCase.Resolution_Notes__c && this.selectedCase.Resolution_Notes__c.trim()) 
+            ? this.selectedCase.Resolution_Notes__c 
+            : null;
     }
 
     get selectedCaseStatusBadgeClass() {
@@ -288,7 +306,8 @@ export default class CaseManagement extends LightningElement {
                         iconName: isSuccess ? 'utility:check' : 'utility:error',
                         timelineIconClass: isSuccess ? 'timeline-status-icon success' : 'timeline-status-icon error',
                         timelineBadgeClass: isSuccess ? 'timeline-http-badge success' : 'timeline-http-badge error',
-                        statusBadgeText: log.Status_Code__c ? `HTTP ${log.Status_Code__c}` : (log.Status__c || 'Logged')
+                        statusBadgeText: isSuccess ? `✓ Success ${log.Status_Code__c ? '• HTTP ' + log.Status_Code__c : ''}` : `✕ Failed ${log.Status_Code__c ? '• HTTP ' + log.Status_Code__c : ''}`,
+                        errorMessage: log.Error_Message__c
                     };
                 });
                 this.isModalOpen = true;
