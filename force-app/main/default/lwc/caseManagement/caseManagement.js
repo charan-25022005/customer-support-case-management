@@ -50,6 +50,8 @@ export default class CaseManagement extends LightningElement {
     @track pendingCloseCaseId = null;
     @track resolutionNotesInput = '';
 
+    @track openMenuRowId = null;
+
     wiredCasesResult;
 
     columns = COLUMNS;
@@ -76,9 +78,20 @@ export default class CaseManagement extends LightningElement {
         if (result.data) {
             this.rawCases = result.data;
             this.cases = result.data.map(c => {
+                const ownerName = c.Owner ? c.Owner.Name : 'Unassigned';
+                const ownerInitials = this.getInitials(ownerName);
+                const isVip = c.Is_VIP__c === true;
+                const status = c.Status || 'New';
+                const priority = c.Priority || 'Low';
+
                 return {
                     ...c,
-                    OwnerName: c.Owner ? c.Owner.Name : ''
+                    OwnerName: ownerName,
+                    ownerInitials: ownerInitials,
+                    isVip: isVip,
+                    statusBadgeClass: this.getStatusBadgeClass(status),
+                    priorityBadgeClass: this.getPriorityBadgeClass(priority),
+                    isMenuOpen: this.openMenuRowId === c.Id
                 };
             });
             this.isLoading = false;
@@ -86,6 +99,31 @@ export default class CaseManagement extends LightningElement {
             this.showToast('Error loading cases', result.error.body ? result.error.body.message : 'Unknown error', 'error');
             this.isLoading = false;
         }
+    }
+
+    getInitials(name) {
+        if (!name) return 'U';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    }
+
+    getStatusBadgeClass(status) {
+        if (!status) return 'badge-pill badge-status-new';
+        const s = status.toLowerCase();
+        if (s === 'closed') return 'badge-pill badge-status-closed';
+        if (s === 'working' || s === 'in progress') return 'badge-pill badge-status-working';
+        return 'badge-pill badge-status-new';
+    }
+
+    getPriorityBadgeClass(priority) {
+        if (!priority) return 'badge-pill badge-priority-low';
+        const p = priority.toLowerCase();
+        if (p === 'high') return 'badge-pill badge-priority-high';
+        if (p === 'medium') return 'badge-pill badge-priority-medium';
+        return 'badge-pill badge-priority-low';
     }
 
     get hasCases() {
@@ -102,6 +140,14 @@ export default class CaseManagement extends LightningElement {
 
     get selectedCaseResolutionNotes() {
         return this.selectedCase && this.selectedCase.Resolution_Notes__c ? this.selectedCase.Resolution_Notes__c : 'No resolution recorded yet.';
+    }
+
+    get selectedCaseStatusBadgeClass() {
+        return this.selectedCase ? this.getStatusBadgeClass(this.selectedCase.Status) : 'badge-pill badge-status-new';
+    }
+
+    get selectedCasePriorityBadgeClass() {
+        return this.selectedCase ? this.getPriorityBadgeClass(this.selectedCase.Priority) : 'badge-pill badge-priority-low';
     }
 
     get metrics() {
@@ -126,10 +172,56 @@ export default class CaseManagement extends LightningElement {
 
     handleRefresh() {
         this.isLoading = true;
+        this.openMenuRowId = null;
         refreshApex(this.wiredCasesResult)
             .finally(() => {
                 this.isLoading = false;
             });
+    }
+
+    toggleRowMenu(event) {
+        event.stopPropagation();
+        const rowId = event.currentTarget.dataset.id;
+        this.openMenuRowId = (this.openMenuRowId === rowId) ? null : rowId;
+        this.updateCasesMenuState();
+    }
+
+    updateCasesMenuState() {
+        this.cases = this.cases.map(c => {
+            return {
+                ...c,
+                isMenuOpen: this.openMenuRowId === c.Id
+            };
+        });
+    }
+
+    closeAllRowMenus() {
+        if (this.openMenuRowId !== null) {
+            this.openMenuRowId = null;
+            this.updateCasesMenuState();
+        }
+    }
+
+    handleActionClick(event) {
+        event.stopPropagation();
+        const actionName = event.currentTarget.dataset.action;
+        const rowId = event.currentTarget.dataset.id;
+        const externalId = event.currentTarget.dataset.externalid;
+        this.closeAllRowMenus();
+
+        switch (actionName) {
+            case 'view_details':
+                this.openDetailModal(rowId, externalId);
+                break;
+            case 'close_case':
+                this.openCloseModal(rowId);
+                break;
+            case 'working_case':
+                this.changeCaseStatus(rowId, 'Working', null);
+                break;
+            default:
+                break;
+        }
     }
 
     handleRowAction(event) {

@@ -1,104 +1,228 @@
 <template>
-    <lightning-card title="Customer Support Case Management Dashboard" icon-name="standard:case">
-        <div class="slds-var-p-around_medium header-container">
-            <!-- Summary Metric Cards -->
-            <div class="slds-grid slds-gutters slds-var-m-bottom_medium">
-                <div class="slds-col slds-size_1-of-4">
-                    <div class="metric-card metric-card-total">
-                        <div class="metric-value">{metrics.total}</div>
-                        <div class="metric-label">Total Cases</div>
-                    </div>
+    <div class="dashboard-card" onclick={closeAllRowMenus}>
+        <!-- Header Hero -->
+        <header class="header-hero">
+            <div class="header-title-container">
+                <div class="header-icon-wrapper">
+                    <lightning-icon icon-name="standard:case" size="medium" variant="inverse"></lightning-icon>
                 </div>
-                <div class="slds-col slds-size_1-of-4">
-                    <div class="metric-card metric-card-open">
-                        <div class="metric-value">{metrics.open}</div>
-                        <div class="metric-label">Open Cases</div>
-                    </div>
-                </div>
-                <div class="slds-col slds-size_1-of-4">
-                    <div class="metric-card metric-card-high">
-                        <div class="metric-value">{metrics.highPriority}</div>
-                        <div class="metric-label">High Priority</div>
-                    </div>
-                </div>
-                <div class="slds-col slds-size_1-of-4">
-                    <div class="metric-card metric-card-vip">
-                        <div class="metric-value">{metrics.vip}</div>
-                        <div class="metric-label">VIP Customer Cases</div>
-                    </div>
+                <div>
+                    <h1 class="header-title">Customer Support Case Management Dashboard</h1>
+                    <p class="header-subtitle">Monitor, prioritize and resolve customer support cases</p>
                 </div>
             </div>
+        </header>
 
-            <!-- Filter Controls -->
-            <div class="slds-grid slds-gutters slds-grid_vertical-align-center slds-var-m-bottom_medium search-bar-container">
-                <div class="slds-col slds-size_4-of-12">
-                    <lightning-input
-                        type="search"
-                        label="Search Cases"
-                        placeholder="Search by Case #, Subject, External ID..."
-                        value={searchTerm}
-                        onchange={handleSearchChange}>
-                    </lightning-input>
+        <!-- Summary Metrics Cards Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card metric-card-total">
+                <div class="metric-header-row">
+                    <span class="metric-label">Total Cases</span>
+                    <div class="metric-icon-bubble">
+                        <lightning-icon icon-name="utility:case" size="small" variant="brand"></lightning-icon>
+                    </div>
                 </div>
-                <div class="slds-col slds-size_3-of-12">
-                    <lightning-combobox
-                        name="priorityFilter"
-                        label="Priority"
-                        value={priorityFilter}
-                        options={priorityOptions}
-                        onchange={handlePriorityFilterChange}>
-                    </lightning-combobox>
-                </div>
-                <div class="slds-col slds-size_3-of-12">
-                    <lightning-combobox
-                        name="statusFilter"
-                        label="Status"
-                        value={statusFilter}
-                        options={statusOptions}
-                        onchange={handleStatusFilterChange}>
-                    </lightning-combobox>
-                </div>
-                <div class="slds-col slds-size_2-of-12 slds-var-p-top_large">
-                    <lightning-button
-                        label="Refresh"
-                        icon-name="utility:refresh"
-                        variant="neutral"
-                        onclick={handleRefresh}>
-                    </lightning-button>
-                </div>
+                <div class="metric-value">{metrics.total}</div>
             </div>
 
-            <!-- Cases Datatable -->
-            <template if:true={isLoading}>
+            <div class="metric-card metric-card-open">
+                <div class="metric-header-row">
+                    <span class="metric-label">Open Cases</span>
+                    <div class="metric-icon-bubble">
+                        <lightning-icon icon-name="utility:clock" size="small"></lightning-icon>
+                    </div>
+                </div>
+                <div class="metric-value">{metrics.open}</div>
+            </div>
+
+            <div class="metric-card metric-card-high">
+                <div class="metric-header-row">
+                    <span class="metric-label">High Priority</span>
+                    <div class="metric-icon-bubble">
+                        <lightning-icon icon-name="utility:warning" size="small" variant="error"></lightning-icon>
+                    </div>
+                </div>
+                <div class="metric-value">{metrics.highPriority}</div>
+            </div>
+
+            <div class="metric-card metric-card-vip">
+                <div class="metric-header-row">
+                    <span class="metric-label">VIP Customers</span>
+                    <div class="metric-icon-bubble">
+                        <lightning-icon icon-name="utility:favorite" size="small"></lightning-icon>
+                    </div>
+                </div>
+                <div class="metric-value">{metrics.vip}</div>
+            </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="toolbar-container">
+            <div class="search-input-col">
+                <lightning-input
+                    type="search"
+                    label="Search Cases"
+                    placeholder="Search by Case #, Subject, External ID..."
+                    value={searchTerm}
+                    onchange={handleSearchChange}>
+                </lightning-input>
+            </div>
+            <div class="filter-input-col">
+                <lightning-combobox
+                    name="priorityFilter"
+                    label="Priority"
+                    value={priorityFilter}
+                    options={priorityOptions}
+                    onchange={handlePriorityFilterChange}>
+                </lightning-combobox>
+            </div>
+            <div class="filter-input-col">
+                <lightning-combobox
+                    name="statusFilter"
+                    label="Status"
+                    value={statusFilter}
+                    options={statusOptions}
+                    onchange={handleStatusFilterChange}>
+                </lightning-combobox>
+            </div>
+            <div class="action-btn-col">
+                <lightning-button
+                    label="Refresh"
+                    icon-name="utility:refresh"
+                    variant="brand"
+                    class="refresh-btn"
+                    onclick={handleRefresh}>
+                </lightning-button>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <template if:true={isLoading}>
+            <div class="slds-var-p-around_large slds-text-align_center">
                 <lightning-spinner alternative-text="Loading cases..." size="medium"></lightning-spinner>
-            </template>
+            </div>
+        </template>
 
-            <template if:true={hasCases}>
-                <div class="table-container">
-                    <lightning-datatable
-                        key-field="Id"
-                        data={cases}
-                        columns={columns}
-                        onrowaction={handleRowAction}
-                        hide-checkbox-column>
-                    </lightning-datatable>
-                </div>
-            </template>
+        <!-- Custom SaaS Data Table -->
+        <template if:true={hasCases}>
+            <div class="table-wrapper">
+                <table class="custom-saas-table">
+                    <thead>
+                        <tr>
+                            <th>Case Number</th>
+                            <th>Subject</th>
+                            <th>External ID</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>VIP Customer</th>
+                            <th>Owner</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={cases} for:item="c">
+                            <tr key={c.Id}>
+                                <td>
+                                    <a href="javascript:void(0);"
+                                       class="case-number-link"
+                                       data-id={c.Id}
+                                       data-externalid={c.External_Case_Id__c}
+                                       data-action="view_details"
+                                       onclick={handleActionClick}>
+                                        {c.CaseNumber}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="case-subject-text">{c.Subject}</span>
+                                </td>
+                                <td>
+                                    <span class="external-id-code">{c.External_Case_Id__c}</span>
+                                </td>
+                                <td>
+                                    <span class={c.priorityBadgeClass}>
+                                        {c.Priority}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class={c.statusBadgeClass}>
+                                        <span class="dot-indicator"></span>
+                                        {c.Status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <template if:true={c.isVip}>
+                                        <span class="badge-pill badge-vip">
+                                            <span class="vip-star">★</span> VIP
+                                        </span>
+                                    </template>
+                                    <template if:false={c.isVip}>
+                                        <span class="no-vip-text">-</span>
+                                    </template>
+                                </td>
+                                <td>
+                                    <div class="owner-container">
+                                        <div class="owner-avatar">{c.ownerInitials}</div>
+                                        <span class="owner-name">{c.OwnerName}</span>
+                                    </div>
+                                </td>
+                                <td style="text-align: right;">
+                                    <div class="action-dropdown-container">
+                                        <button class="action-trigger-btn" data-id={c.Id} onclick={toggleRowMenu}>
+                                            Actions ▾
+                                        </button>
+                                        <template if:true={c.isMenuOpen}>
+                                            <div class="action-menu-popover">
+                                                <div class="action-menu-item"
+                                                     data-id={c.Id}
+                                                     data-externalid={c.External_Case_Id__c}
+                                                     data-action="view_details"
+                                                     onclick={handleActionClick}>
+                                                    <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                                                    View Details & Logs
+                                                </div>
+                                                <div class="action-menu-item"
+                                                     data-id={c.Id}
+                                                     data-action="working_case"
+                                                     onclick={handleActionClick}>
+                                                    <lightning-icon icon-name="utility:play" size="x-small"></lightning-icon>
+                                                    Set to In Progress
+                                                </div>
+                                                <div class="action-menu-item action-menu-item-close"
+                                                     data-id={c.Id}
+                                                     data-action="close_case"
+                                                     onclick={handleActionClick}>
+                                                    <lightning-icon icon-name="utility:check" size="x-small" variant="error"></lightning-icon>
+                                                    Mark as Closed
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </template>
 
-            <template if:false={hasCases}>
-                <div class="empty-state slds-text-align_center slds-var-p-around_large">
-                    <lightning-icon icon-name="utility:search" size="large" class="slds-var-m-bottom_small"></lightning-icon>
-                    <p class="slds-text-heading_medium">No Cases Found</p>
+        <!-- Empty State -->
+        <template if:false={hasCases}>
+            <template if:false={isLoading}>
+                <div class="empty-state-card slds-var-m-horizontal_large slds-var-m-bottom_large">
+                    <div class="empty-icon-wrapper">
+                        <lightning-icon icon-name="utility:search" size="medium"></lightning-icon>
+                    </div>
+                    <h3 class="slds-text-heading_medium slds-var-m-bottom_x-small" style="font-weight:700; color:#0f172a;">No Cases Found</h3>
                     <p class="slds-text-color_weak">Try adjusting your search terms or filter criteria.</p>
                 </div>
             </template>
-        </div>
+        </template>
 
         <!-- Case Detail & Integration Log Modal -->
         <template if:true={isModalOpen}>
             <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_large" aria-labelledby="modal-heading-01" aria-modal="true">
                 <div class="slds-modal__container">
-                    <header class="slds-modal__header modal-header">
+                    <header class="modal-header-hero slds-modal__header">
                         <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
                             <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse" size="small"></lightning-icon>
                             <span class="slds-assistive-text">Close</span>
@@ -107,35 +231,55 @@
                             Case Details: {selectedCase.CaseNumber}
                         </h2>
                     </header>
-                    <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-modal__content slds-var-p-around_large" id="modal-content-id-1">
                         <lightning-tabset>
                             <lightning-tab label="Overview">
-                                <div class="slds-grid slds-wrap slds-gutters">
-                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
-                                        <strong>Subject:</strong> {selectedCase.Subject}
+                                <div class="detail-grid slds-var-m-bottom_medium">
+                                    <div>
+                                        <div class="detail-label">Subject</div>
+                                        <div class="detail-value">{selectedCase.Subject}</div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
-                                        <strong>External Case ID:</strong> {selectedCase.External_Case_Id__c}
+                                    <div>
+                                        <div class="detail-label">External Case ID</div>
+                                        <div class="detail-value external-id-code">{selectedCase.External_Case_Id__c}</div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
-                                        <strong>Priority:</strong> {selectedCase.Priority}
+                                    <div>
+                                        <div class="detail-label">Priority</div>
+                                        <div class="detail-value">
+                                            <span class={selectedCasePriorityBadgeClass}>{selectedCase.Priority}</span>
+                                        </div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
-                                        <strong>Status:</strong> {selectedCase.Status}
+                                    <div>
+                                        <div class="detail-label">Status</div>
+                                        <div class="detail-value">
+                                            <span class={selectedCaseStatusBadgeClass}>
+                                                <span class="dot-indicator"></span>
+                                                {selectedCase.Status}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
-                                        <strong>VIP Status:</strong> {selectedCase.Is_VIP__c}
+                                    <div>
+                                        <div class="detail-label">VIP Status</div>
+                                        <div class="detail-value">
+                                            <template if:true={selectedCase.Is_VIP__c}>
+                                                <span class="badge-pill badge-vip">★ VIP</span>
+                                            </template>
+                                            <template if:false={selectedCase.Is_VIP__c}>
+                                                <span class="no-vip-text">Standard Customer</span>
+                                            </template>
+                                        </div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-2 slds-var-m-bottom_small">
-                                        <strong>Owner:</strong> {selectedCaseOwnerName}
+                                    <div>
+                                        <div class="detail-label">Owner</div>
+                                        <div class="detail-value">{selectedCaseOwnerName}</div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-1 slds-var-m-bottom_small">
-                                        <strong>Description:</strong>
-                                        <p class="description-box">{selectedCase.Description}</p>
+                                    <div class="detail-item-full">
+                                        <div class="detail-label">Description</div>
+                                        <div class="box-styled">{selectedCase.Description}</div>
                                     </div>
-                                    <div class="slds-col slds-size_1-of-1 slds-var-m-bottom_small">
-                                        <strong>Resolution Notes:</strong>
-                                        <p class="description-box resolution-box">{selectedCaseResolutionNotes}</p>
+                                    <div class="detail-item-full">
+                                        <div class="detail-label">Resolution Notes</div>
+                                        <div class="resolution-card-highlight">{selectedCaseResolutionNotes}</div>
                                     </div>
                                 </div>
                             </lightning-tab>
@@ -150,7 +294,7 @@
                                     </lightning-datatable>
                                 </template>
                                 <template if:false={hasLogs}>
-                                    <p class="slds-text-align_center slds-var-p-around_medium">No integration logs recorded for this external case.</p>
+                                    <p class="slds-text-align_center slds-var-p-around_large slds-text-color_weak">No integration logs recorded for this external case.</p>
                                 </template>
                             </lightning-tab>
                         </lightning-tabset>
@@ -167,7 +311,7 @@
         <template if:true={isCloseModalOpen}>
             <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-labelledby="modal-heading-02" aria-modal="true">
                 <div class="slds-modal__container">
-                    <header class="slds-modal__header modal-header">
+                    <header class="modal-header-hero slds-modal__header">
                         <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeCloseModal}>
                             <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse" size="small"></lightning-icon>
                             <span class="slds-assistive-text">Close</span>
@@ -176,7 +320,7 @@
                             Close Case & Provide Resolution Notes
                         </h2>
                     </header>
-                    <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-2">
+                    <div class="slds-modal__content slds-var-p-around_large" id="modal-content-id-2">
                         <lightning-textarea
                             name="resolutionNotes"
                             label="Resolution Notes"
@@ -195,5 +339,5 @@
             </section>
             <div class="slds-backdrop slds-backdrop_open"></div>
         </template>
-    </lightning-card>
+    </div>
 </template>
