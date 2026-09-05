@@ -45,6 +45,7 @@ export default class CaseManagement extends LightningElement {
 
     @track selectedCase = null;
     @track integrationLogs = [];
+    @track formattedLogs = [];
     @track isModalOpen = false;
     @track isCloseModalOpen = false;
     @track pendingCloseCaseId = null;
@@ -111,19 +112,19 @@ export default class CaseManagement extends LightningElement {
     }
 
     getStatusBadgeClass(status) {
-        if (!status) return 'badge-pill badge-status-new';
+        if (!status) return 'pill-badge badge-status-new';
         const s = status.toLowerCase();
-        if (s === 'closed') return 'badge-pill badge-status-closed';
-        if (s === 'working' || s === 'in progress') return 'badge-pill badge-status-working';
-        return 'badge-pill badge-status-new';
+        if (s === 'closed') return 'pill-badge badge-status-closed';
+        if (s === 'working' || s === 'in progress') return 'pill-badge badge-status-working';
+        return 'pill-badge badge-status-new';
     }
 
     getPriorityBadgeClass(priority) {
-        if (!priority) return 'badge-pill badge-priority-low';
+        if (!priority) return 'pill-badge badge-priority-low';
         const p = priority.toLowerCase();
-        if (p === 'high') return 'badge-pill badge-priority-high';
-        if (p === 'medium') return 'badge-pill badge-priority-medium';
-        return 'badge-pill badge-priority-low';
+        if (p === 'high') return 'pill-badge badge-priority-high';
+        if (p === 'medium') return 'pill-badge badge-priority-medium';
+        return 'pill-badge badge-priority-low';
     }
 
     get hasCases() {
@@ -131,7 +132,7 @@ export default class CaseManagement extends LightningElement {
     }
 
     get hasLogs() {
-        return this.integrationLogs && this.integrationLogs.length > 0;
+        return this.formattedLogs && this.formattedLogs.length > 0;
     }
 
     get selectedCaseOwnerName() {
@@ -139,15 +140,15 @@ export default class CaseManagement extends LightningElement {
     }
 
     get selectedCaseResolutionNotes() {
-        return this.selectedCase && this.selectedCase.Resolution_Notes__c ? this.selectedCase.Resolution_Notes__c : 'No resolution recorded yet.';
+        return this.selectedCase && this.selectedCase.Resolution_Notes__c ? this.selectedCase.Resolution_Notes__c : null;
     }
 
     get selectedCaseStatusBadgeClass() {
-        return this.selectedCase ? this.getStatusBadgeClass(this.selectedCase.Status) : 'badge-pill badge-status-new';
+        return this.selectedCase ? this.getStatusBadgeClass(this.selectedCase.Status) : 'pill-badge badge-status-new';
     }
 
     get selectedCasePriorityBadgeClass() {
-        return this.selectedCase ? this.getPriorityBadgeClass(this.selectedCase.Priority) : 'badge-pill badge-priority-low';
+        return this.selectedCase ? this.getPriorityBadgeClass(this.selectedCase.Priority) : 'pill-badge badge-priority-low';
     }
 
     get metrics() {
@@ -278,7 +279,18 @@ export default class CaseManagement extends LightningElement {
                 return getIntegrationLogs({ externalCaseId: externalCaseId });
             })
             .then(logs => {
-                this.integrationLogs = logs;
+                this.integrationLogs = logs || [];
+                this.formattedLogs = this.integrationLogs.map(log => {
+                    const isSuccess = log.Status__c === 'Success' || (log.Status_Code__c >= 200 && log.Status_Code__c < 300);
+                    return {
+                        ...log,
+                        isSuccess: isSuccess,
+                        iconName: isSuccess ? 'utility:check' : 'utility:error',
+                        timelineIconClass: isSuccess ? 'timeline-status-icon success' : 'timeline-status-icon error',
+                        timelineBadgeClass: isSuccess ? 'timeline-http-badge success' : 'timeline-http-badge error',
+                        statusBadgeText: log.Status_Code__c ? `HTTP ${log.Status_Code__c}` : (log.Status__c || 'Logged')
+                    };
+                });
                 this.isModalOpen = true;
             })
             .catch(error => {
@@ -293,6 +305,7 @@ export default class CaseManagement extends LightningElement {
         this.isModalOpen = false;
         this.selectedCase = null;
         this.integrationLogs = [];
+        this.formattedLogs = [];
     }
 
     changeCaseStatus(caseId, newStatus, resolutionNotes = null) {
