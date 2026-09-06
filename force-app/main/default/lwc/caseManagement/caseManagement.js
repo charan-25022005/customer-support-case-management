@@ -212,12 +212,52 @@ export default class CaseManagement extends LightningElement {
         return this.selectedCase ? this.getPriorityBadgeClass(this.selectedCase.Priority) : 'pill-badge badge-priority-low';
     }
 
+    get selectedCaseCustomerId() {
+        return (this.selectedCase && this.selectedCase.Customer_External_Id__c && this.selectedCase.Customer_External_Id__c.trim())
+            ? this.selectedCase.Customer_External_Id__c
+            : 'Not available';
+    }
+
+    get selectedCaseCustomerName() {
+        return (this.selectedCase && this.selectedCase.Contact && this.selectedCase.Contact.Name && this.selectedCase.Contact.Name.trim())
+            ? this.selectedCase.Contact.Name
+            : 'Not available';
+    }
+
+    get selectedCaseCustomerEmail() {
+        return (this.selectedCase && this.selectedCase.Contact && this.selectedCase.Contact.Email && this.selectedCase.Contact.Email.trim())
+            ? this.selectedCase.Contact.Email
+            : 'Not available';
+    }
+
+    get selectedCaseCustomerPhone() {
+        return (this.selectedCase && this.selectedCase.Contact && this.selectedCase.Contact.Phone && this.selectedCase.Contact.Phone.trim())
+            ? this.selectedCase.Contact.Phone
+            : 'Not available';
+    }
+
+    get selectedCaseAccountName() {
+        return (this.selectedCase && this.selectedCase.Account && this.selectedCase.Account.Name && this.selectedCase.Account.Name.trim())
+            ? this.selectedCase.Account.Name
+            : 'Not available';
+    }
+
+    get selectedCaseCustomerType() {
+        if (!this.selectedCase) return 'Standard Customer';
+        return this.selectedCase.Is_VIP__c ? 'VIP Customer' : 'Standard Customer';
+    }
+
+    get selectedCaseCustomerStatus() {
+        return 'Active';
+    }
+
     get metrics() {
         let total = this.rawCases.length;
         let open = this.rawCases.filter(c => c.Status !== 'Closed').length;
+        let closed = this.rawCases.filter(c => c.Status === 'Closed').length;
         let highPriority = this.rawCases.filter(c => c.Priority === 'High').length;
         let vip = this.rawCases.filter(c => c.Is_VIP__c === true).length;
-        return { total, open, highPriority, vip };
+        return { total, open, closed, highPriority, vip };
     }
 
     handleSearchChange(event) {

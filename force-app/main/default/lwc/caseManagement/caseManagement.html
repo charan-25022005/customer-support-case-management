@@ -1,29 +1,33 @@
 <template>
     <div class="app-wrapper" onclick={closeAllRowMenus}>
         <div class="app-container">
-            <!-- Header Hero Panel -->
+            <!-- 1. Header Hero Panel -->
             <header class="header-hero-panel">
                 <div class="header-left-brand">
                     <div class="header-icon-container">
                         <lightning-icon icon-name="standard:case" size="medium" variant="inverse"></lightning-icon>
                     </div>
-                    <div>
-                        <h1 class="header-title-text">Customer Support Case Management</h1>
-                        <p class="header-subtitle-text">Monitor, prioritize and resolve customer support cases</p>
+                    <div class="header-text-group">
+                        <div class="header-pre-title">CUSTOMER SUPPORT</div>
+                        <h1 class="header-title-text">CASE MANAGEMENT</h1>
+                        <p class="header-subtitle-text">Automated | Integrated | Intelligent | Customer Centric</p>
                     </div>
                 </div>
-                <div class="live-support-badge">
-                    <span class="pulsing-dot"></span>
-                    Live Support
+                <div class="header-right-status">
+                    <div class="live-support-badge">
+                        <span class="pulsing-dot"></span>
+                        <span class="live-badge-text">System Operational</span>
+                    </div>
                 </div>
             </header>
 
-            <!-- KPI Cards Grid -->
+            <!-- 2. KPI Section (5 Cards) -->
             <div class="kpi-grid">
+                <!-- Total Cases -->
                 <div class="kpi-card kpi-total">
                     <div class="kpi-top-bar"></div>
                     <div class="kpi-header">
-                        <span class="kpi-label">Total Cases</span>
+                        <span class="kpi-label">TOTAL CASES</span>
                         <div class="kpi-icon-bubble">
                             <lightning-icon icon-name="utility:case" size="small" variant="brand"></lightning-icon>
                         </div>
@@ -32,15 +36,16 @@
                         <div class="kpi-number">{metrics.total}</div>
                         <div class="kpi-footer-status">
                             <lightning-icon icon-name="utility:graph" size="x-small"></lightning-icon>
-                            Active Workspace Volume
+                            <span>All support cases</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Open Cases -->
                 <div class="kpi-card kpi-open">
                     <div class="kpi-top-bar"></div>
                     <div class="kpi-header">
-                        <span class="kpi-label">Open Cases</span>
+                        <span class="kpi-label">OPEN CASES</span>
                         <div class="kpi-icon-bubble">
                             <lightning-icon icon-name="utility:clock" size="small"></lightning-icon>
                         </div>
@@ -49,15 +54,34 @@
                         <div class="kpi-number">{metrics.open}</div>
                         <div class="kpi-footer-status">
                             <lightning-icon icon-name="utility:clock" size="x-small"></lightning-icon>
-                            Requires Attention
+                            <span>Requires attention</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Closed Cases -->
+                <div class="kpi-card kpi-closed">
+                    <div class="kpi-top-bar"></div>
+                    <div class="kpi-header">
+                        <span class="kpi-label">CLOSED CASES</span>
+                        <div class="kpi-icon-bubble">
+                            <lightning-icon icon-name="utility:check" size="small" variant="success"></lightning-icon>
+                        </div>
+                    </div>
+                    <div class="kpi-body">
+                        <div class="kpi-number">{metrics.closed}</div>
+                        <div class="kpi-footer-status">
+                            <lightning-icon icon-name="utility:check" size="x-small"></lightning-icon>
+                            <span>Resolved cases</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High Priority -->
                 <div class="kpi-card kpi-high">
                     <div class="kpi-top-bar"></div>
                     <div class="kpi-header">
-                        <span class="kpi-label">High Priority</span>
+                        <span class="kpi-label">HIGH PRIORITY</span>
                         <div class="kpi-icon-bubble">
                             <lightning-icon icon-name="utility:warning" size="small" variant="error"></lightning-icon>
                         </div>
@@ -66,15 +90,16 @@
                         <div class="kpi-number">{metrics.highPriority}</div>
                         <div class="kpi-footer-status">
                             <lightning-icon icon-name="utility:warning" size="x-small"></lightning-icon>
-                            Urgent SLA Cases
+                            <span>Priority attention</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- VIP Cases -->
                 <div class="kpi-card kpi-vip">
                     <div class="kpi-top-bar"></div>
                     <div class="kpi-header">
-                        <span class="kpi-label">VIP Customers</span>
+                        <span class="kpi-label">VIP CASES</span>
                         <div class="kpi-icon-bubble">
                             <lightning-icon icon-name="utility:favorite" size="small"></lightning-icon>
                         </div>
@@ -83,186 +108,469 @@
                         <div class="kpi-number">{metrics.vip}</div>
                         <div class="kpi-footer-status">
                             <lightning-icon icon-name="utility:favorite" size="x-small"></lightning-icon>
-                            Priority Escalations
+                            <span>VIP customer cases</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Workspace Section Header -->
-            <div class="workspace-header">
-                <div>
-                    <h2 class="workspace-title">Case Management</h2>
-                    <p class="workspace-subtitle">Review, prioritize and resolve customer support requests</p>
-                </div>
-                <div>
-                    <span class="total-cases-count-badge">{metrics.total} Total Cases</span>
-                </div>
-            </div>
-
-            <!-- Floating Filter Toolbar -->
-            <div class="floating-filter-panel">
-                <div class="search-col">
-                    <lightning-input
-                        type="search"
-                        label="Search Cases"
-                        placeholder="Search by Case #, Subject, External ID..."
-                        value={searchTerm}
-                        onchange={handleSearchChange}>
-                    </lightning-input>
-                </div>
-                <div class="filter-col">
-                    <lightning-combobox
-                        name="priorityFilter"
-                        label="Priority"
-                        value={priorityFilter}
-                        options={priorityOptions}
-                        onchange={handlePriorityFilterChange}>
-                    </lightning-combobox>
-                </div>
-                <div class="filter-col">
-                    <lightning-combobox
-                        name="statusFilter"
-                        label="Status"
-                        value={statusFilter}
-                        options={statusOptions}
-                        onchange={handleStatusFilterChange}>
-                    </lightning-combobox>
-                </div>
-                <div class="refresh-col">
-                    <lightning-button
-                        label="Refresh"
-                        icon-name="utility:refresh"
-                        variant="brand"
-                        class="refresh-button"
-                        onclick={handleRefresh}>
-                    </lightning-button>
-                </div>
-            </div>
-
-            <!-- Loading Spinner Overlay -->
-            <template if:true={isLoading}>
-                <div class="empty-card slds-var-m-bottom_large">
-                    <lightning-spinner alternative-text="Loading cases..." size="medium"></lightning-spinner>
-                </div>
-            </template>
-
-            <!-- SaaS Data Grid Table -->
-            <template if:true={hasCases}>
-                <div class="data-grid-container">
-                    <table class="saas-data-table">
-                        <thead>
-                            <tr>
-                                <th>Case</th>
-                                <th>Subject</th>
-                                <th>External ID</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>VIP</th>
-                                <th>Owner</th>
-                                <th style="text-align: right;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <template for:each={cases} for:item="c">
-                                <tr key={c.Id}>
-                                    <td>
-                                        <a href="javascript:void(0);"
-                                           class="case-id-badge"
-                                           data-id={c.Id}
-                                           data-externalid={c.External_Case_Id__c}
-                                           data-action="view_details"
-                                           onclick={handleActionClick}>
-                                            {c.CaseNumber}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="subject-text">{c.Subject}</span>
-                                    </td>
-                                    <td>
-                                        <span class="external-code-tag">{c.External_Case_Id__c}</span>
-                                    </td>
-                                    <td>
-                                        <span class={c.priorityBadgeClass}>
-                                            {c.Priority}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class={c.statusBadgeClass}>
-                                            <span class="status-dot"></span>
-                                            {c.Status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <template if:true={c.isVip}>
-                                            <span class="pill-badge badge-vip-gold">
-                                                <span class="star-icon">★</span> VIP
-                                            </span>
-                                        </template>
-                                        <template if:false={c.isVip}>
-                                            <span class="pill-badge badge-standard">Standard</span>
-                                        </template>
-                                    </td>
-                                    <td>
-                                        <div class="owner-cell">
-                                            <div class="avatar-bubble">{c.ownerInitials}</div>
-                                            <span class="owner-title">{c.OwnerName}</span>
-                                        </div>
-                                    </td>
-                                    <td style="text-align: right;">
-                                        <div class="action-popover-wrapper">
-                                            <button class="btn-actions-trigger" data-id={c.Id} onclick={toggleRowMenu}>
-                                                Actions ▾
-                                            </button>
-                                            <template if:true={c.isMenuOpen}>
-                                                <div class="popover-menu-dropdown">
-                                                    <div class="popover-menu-item"
-                                                         data-id={c.Id}
-                                                         data-externalid={c.External_Case_Id__c}
-                                                         data-action="view_details"
-                                                         onclick={handleActionClick}>
-                                                        <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
-                                                        View Details & Logs
-                                                    </div>
-                                                    <div class="popover-menu-item"
-                                                         data-id={c.Id}
-                                                         data-action="working_case"
-                                                         onclick={handleActionClick}>
-                                                        <lightning-icon icon-name="utility:play" size="x-small"></lightning-icon>
-                                                        Set to In Progress
-                                                    </div>
-                                                    <div class="popover-menu-item popover-menu-item-close"
-                                                         data-id={c.Id}
-                                                         data-action="close_case"
-                                                         onclick={handleActionClick}>
-                                                        <lightning-icon icon-name="utility:check" size="x-small" variant="error"></lightning-icon>
-                                                        Mark as Closed
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </template>
-
-            <!-- Empty State -->
-            <template if:false={hasCases}>
-                <template if:false={isLoading}>
-                    <div class="empty-card">
-                        <div class="empty-icon-circle">
-                            <lightning-icon icon-name="utility:search" size="medium"></lightning-icon>
+            <!-- 3. Case Operations Area -->
+            <div class="workspace-section-card">
+                <div class="workspace-header">
+                    <div class="workspace-header-titles">
+                        <div class="workspace-header-main-row">
+                            <h2 class="workspace-title">CASE OPERATIONS</h2>
+                            <span class="total-cases-count-badge">{metrics.total} Active Cases</span>
                         </div>
-                        <h3 class="slds-text-heading_medium" style="font-weight:800; color:#0f172a; margin-bottom:4px;">No Cases Found</h3>
-                        <p class="slds-text-color_weak">Try adjusting your search terms or filter criteria.</p>
+                        <p class="workspace-subtitle">Monitor, prioritize and resolve customer support requests</p>
+                    </div>
+                </div>
+
+                <!-- Floating Filter Toolbar -->
+                <div class="floating-filter-panel">
+                    <div class="search-col">
+                        <lightning-input
+                            type="search"
+                            label="Search Cases"
+                            placeholder="Search by Case #, Subject, External ID..."
+                            value={searchTerm}
+                            onchange={handleSearchChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="filter-col">
+                        <lightning-combobox
+                            name="priorityFilter"
+                            label="Priority"
+                            value={priorityFilter}
+                            options={priorityOptions}
+                            onchange={handlePriorityFilterChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="filter-col">
+                        <lightning-combobox
+                            name="statusFilter"
+                            label="Status"
+                            value={statusFilter}
+                            options={statusOptions}
+                            onchange={handleStatusFilterChange}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="refresh-col">
+                        <lightning-button
+                            label="Refresh"
+                            icon-name="utility:refresh"
+                            variant="brand"
+                            class="refresh-button"
+                            onclick={handleRefresh}>
+                        </lightning-button>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner Overlay -->
+                <template if:true={isLoading}>
+                    <div class="loading-container">
+                        <lightning-spinner alternative-text="Loading cases..." size="medium"></lightning-spinner>
                     </div>
                 </template>
-            </template>
 
-            <!-- Case Detail & Integration Log Modal -->
+                <!-- 4. Case Workspace Table -->
+                <template if:true={hasCases}>
+                    <div class="data-grid-container">
+                        <table class="saas-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Case</th>
+                                    <th>Subject</th>
+                                    <th>External ID</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>VIP Customer</th>
+                                    <th>Owner</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={cases} for:item="c">
+                                    <tr key={c.Id}>
+                                        <td>
+                                            <a href="javascript:void(0);"
+                                               class="case-id-badge"
+                                               data-id={c.Id}
+                                               data-externalid={c.External_Case_Id__c}
+                                               data-action="view_details"
+                                               onclick={handleActionClick}>
+                                                {c.CaseNumber}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="subject-text">{c.Subject}</span>
+                                        </td>
+                                        <td>
+                                            <span class="external-code-tag">{c.External_Case_Id__c}</span>
+                                        </td>
+                                        <td>
+                                            <span class={c.priorityBadgeClass}>
+                                                {c.Priority}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class={c.statusBadgeClass}>
+                                                <span class="status-dot"></span>
+                                                {c.Status}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <template if:true={c.isVip}>
+                                                <span class="pill-badge badge-vip-gold">
+                                                    <span class="star-icon">★</span> VIP
+                                                </span>
+                                            </template>
+                                            <template if:false={c.isVip}>
+                                                <span class="pill-badge badge-standard">Standard</span>
+                                            </template>
+                                        </td>
+                                        <td>
+                                            <div class="owner-cell">
+                                                <div class="avatar-bubble">{c.ownerInitials}</div>
+                                                <span class="owner-title">{c.OwnerName}</span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            <div class="action-popover-wrapper">
+                                                <button class="btn-actions-trigger" data-id={c.Id} onclick={toggleRowMenu}>
+                                                    Actions ▾
+                                                </button>
+                                                <template if:true={c.isMenuOpen}>
+                                                    <div class="popover-menu-dropdown">
+                                                        <div class="popover-menu-item"
+                                                             data-id={c.Id}
+                                                             data-externalid={c.External_Case_Id__c}
+                                                             data-action="view_details"
+                                                             onclick={handleActionClick}>
+                                                            <lightning-icon icon-name="utility:preview" size="x-small"></lightning-icon>
+                                                            View Details & Logs
+                                                        </div>
+                                                        <div class="popover-menu-item"
+                                                             data-id={c.Id}
+                                                             data-action="working_case"
+                                                             onclick={handleActionClick}>
+                                                            <lightning-icon icon-name="utility:play" size="x-small"></lightning-icon>
+                                                            Set to In Progress
+                                                        </div>
+                                                        <div class="popover-menu-item popover-menu-item-close"
+                                                             data-id={c.Id}
+                                                             data-action="close_case"
+                                                             onclick={handleActionClick}>
+                                                            <lightning-icon icon-name="utility:check" size="x-small" variant="error"></lightning-icon>
+                                                            Mark as Closed
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+
+                <!-- Empty State -->
+                <template if:false={hasCases}>
+                    <template if:false={isLoading}>
+                        <div class="empty-card">
+                            <div class="empty-icon-circle">
+                                <lightning-icon icon-name="utility:search" size="medium"></lightning-icon>
+                            </div>
+                            <h3 class="slds-text-heading_medium" style="font-weight:800; color:#0f172a; margin-bottom:4px;">No Cases Found</h3>
+                            <p class="slds-text-color_weak">Try adjusting your search terms or filter criteria.</p>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- 5. Operational Architecture & Process Panels (Hackathon Showcase) -->
+            <div class="architecture-grid">
+                <!-- 5A. Integration Activity Pipeline -->
+                <div class="architecture-card full-width-card">
+                    <div class="card-section-header">
+                        <div class="header-icon-pill blue">
+                            <lightning-icon icon-name="utility:connected_apps" size="x-small"></lightning-icon>
+                        </div>
+                        <div class="card-title-container">
+                            <h3 class="card-section-title">INTEGRATION ACTIVITY PIPELINE</h3>
+                            <p class="card-section-subtitle">End-to-end asynchronous event ingestion & customer enrichment</p>
+                        </div>
+                        <div class="pipeline-status-badge">
+                            <span class="live-dot-green"></span>
+                            <span>REST Endpoint Active</span>
+                        </div>
+                    </div>
+
+                    <div class="pipeline-flow-container">
+                        <div class="pipeline-step">
+                            <div class="step-icon-circle">
+                                <lightning-icon icon-name="utility:outbound_call" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">External System</div>
+                            <div class="step-desc">Dispatches JSON Ticket Payload</div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <span class="arrow-glyph">➔</span>
+                        </div>
+
+                        <div class="pipeline-step">
+                            <div class="step-icon-circle">
+                                <lightning-icon icon-name="utility:apex" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">Apex REST API</div>
+                            <div class="step-desc">/services/apexrest/cases/v1</div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <span class="arrow-glyph">➔</span>
+                        </div>
+
+                        <div class="pipeline-step">
+                            <div class="step-icon-circle">
+                                <lightning-icon icon-name="utility:database" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">External Case Staging</div>
+                            <div class="step-desc">Immediate Durable Persistence</div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <span class="arrow-glyph">➔</span>
+                        </div>
+
+                        <div class="pipeline-step">
+                            <div class="step-icon-circle">
+                                <lightning-icon icon-name="utility:process" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">Queueable Processing</div>
+                            <div class="step-desc">Async Execution & Retry Logic</div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <span class="arrow-glyph">➔</span>
+                        </div>
+
+                        <div class="pipeline-step">
+                            <div class="step-icon-circle">
+                                <lightning-icon icon-name="utility:call" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">Customer API</div>
+                            <div class="step-desc">Callout Enriches VIP & Profile</div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <span class="arrow-glyph">➔</span>
+                        </div>
+
+                        <div class="pipeline-step">
+                            <div class="step-icon-circle">
+                                <lightning-icon icon-name="utility:identity" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">Customer Matching</div>
+                            <div class="step-desc">Links Account & Contact</div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <span class="arrow-glyph">➔</span>
+                        </div>
+
+                        <div class="pipeline-step highlight">
+                            <div class="step-icon-circle highlight-icon">
+                                <lightning-icon icon-name="utility:case" size="x-small"></lightning-icon>
+                            </div>
+                            <div class="step-title">Salesforce Case</div>
+                            <div class="step-desc">Smart Queue Assigned</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5B. Smart Case Assignment -->
+                <div class="architecture-card half-width-card">
+                    <div class="card-section-header">
+                        <div class="header-icon-pill purple">
+                            <lightning-icon icon-name="utility:routing_offline" size="x-small"></lightning-icon>
+                        </div>
+                        <div>
+                            <h3 class="card-section-title">SMART CASE ASSIGNMENT</h3>
+                            <p class="card-section-subtitle">Automated priority & VIP SLA routing rules</p>
+                        </div>
+                    </div>
+
+                    <div class="assignment-rules-list">
+                        <!-- Rule 1 -->
+                        <div class="rule-item">
+                            <div class="rule-condition">
+                                <span class="pill-badge badge-priority-high">HIGH</span>
+                                <span class="plus-symbol">+</span>
+                                <span class="pill-badge badge-vip-gold">★ VIP</span>
+                            </div>
+                            <div class="rule-arrow">➔</div>
+                            <div class="rule-destination queue-vip">
+                                <lightning-icon icon-name="utility:shield" size="x-small"></lightning-icon>
+                                <div class="queue-text">
+                                    <strong>VIP Support Queue</strong>
+                                    <span>Immediate SLA / Senior Specialists</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rule 2 -->
+                        <div class="rule-item">
+                            <div class="rule-condition">
+                                <span class="pill-badge badge-priority-high">HIGH</span>
+                                <span class="plus-symbol">+</span>
+                                <span class="pill-badge badge-standard">Standard</span>
+                            </div>
+                            <div class="rule-arrow">➔</div>
+                            <div class="rule-destination queue-high">
+                                <lightning-icon icon-name="utility:warning" size="x-small"></lightning-icon>
+                                <div class="queue-text">
+                                    <strong>High Priority Support Queue</strong>
+                                    <span>Expedited Queue / Rapid Response</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rule 3 -->
+                        <div class="rule-item">
+                            <div class="rule-condition">
+                                <span class="pill-badge badge-priority-low">DEFAULT</span>
+                                <span class="plus-symbol">+</span>
+                                <span class="pill-badge badge-standard">Standard</span>
+                            </div>
+                            <div class="rule-arrow">➔</div>
+                            <div class="rule-destination queue-standard">
+                                <lightning-icon icon-name="utility:groups" size="x-small"></lightning-icon>
+                                <div class="queue-text">
+                                    <strong>Standard Support Queue</strong>
+                                    <span>Standard Tier / Load Balanced</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5C. Case Resolution Workflow & Integration Health -->
+                <div class="architecture-card half-width-card">
+                    <div class="card-section-header">
+                        <div class="header-icon-pill green">
+                            <lightning-icon icon-name="utility:task" size="x-small"></lightning-icon>
+                        </div>
+                        <div>
+                            <h3 class="card-section-title">CASE RESOLUTION WORKFLOW</h3>
+                            <p class="card-section-subtitle">Mandatory resolution capture & audit lifecycle</p>
+                        </div>
+                    </div>
+
+                    <div class="workflow-steps-vertical">
+                        <div class="workflow-step-item">
+                            <div class="workflow-step-badge step-1">1</div>
+                            <div class="workflow-step-content">
+                                <div class="workflow-step-title">Case Created</div>
+                                <div class="workflow-step-desc">Ingested with New status and queued</div>
+                            </div>
+                            <div class="workflow-step-connector"></div>
+                        </div>
+
+                        <div class="workflow-step-item">
+                            <div class="workflow-step-badge step-2">2</div>
+                            <div class="workflow-step-content">
+                                <div class="workflow-step-title">In Progress</div>
+                                <div class="workflow-step-desc">Agent accepts and actively diagnoses issue</div>
+                            </div>
+                            <div class="workflow-step-connector"></div>
+                        </div>
+
+                        <div class="workflow-step-item">
+                            <div class="workflow-step-badge step-3">3</div>
+                            <div class="workflow-step-content">
+                                <div class="workflow-step-title">Resolution Notes Required</div>
+                                <div class="workflow-step-desc">Modal enforces mandatory summary & notes</div>
+                            </div>
+                            <div class="workflow-step-connector"></div>
+                        </div>
+
+                        <div class="workflow-step-item">
+                            <div class="workflow-step-badge step-4">4</div>
+                            <div class="workflow-step-content">
+                                <div class="workflow-step-title">Closed & Resolution Recorded</div>
+                                <div class="workflow-step-desc">Status set to Closed with immutable user timestamp</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Integration Health Strip -->
+                    <div class="health-strip">
+                        <div class="health-item">
+                            <span class="health-dot green"></span>
+                            <span class="health-label">API Healthy</span>
+                        </div>
+                        <div class="health-divider">|</div>
+                        <div class="health-item">
+                            <span class="health-dot green"></span>
+                            <span class="health-label">Processing Active</span>
+                        </div>
+                        <div class="health-divider">|</div>
+                        <div class="health-item">
+                            <span class="health-dot green"></span>
+                            <span class="health-label">Logging Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Hackathon Feature Summary Strip -->
+            <div class="feature-strip-container">
+                <div class="feature-strip-card">
+                    <div class="feature-icon">⚙</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Automated Case Management</div>
+                        <div class="feature-sub">Automatically processes support cases</div>
+                    </div>
+                </div>
+
+                <div class="feature-strip-card">
+                    <div class="feature-icon">🔗</div>
+                    <div class="feature-content">
+                        <div class="feature-title">External Integration</div>
+                        <div class="feature-sub">Enriches data from external Customer API</div>
+                    </div>
+                </div>
+
+                <div class="feature-strip-card">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Smart Case Assignment</div>
+                        <div class="feature-sub">Routes cases by priority and VIP status</div>
+                    </div>
+                </div>
+
+                <div class="feature-strip-card">
+                    <div class="feature-icon">📝</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Resolution Tracking</div>
+                        <div class="feature-sub">Requires resolution details before closing</div>
+                    </div>
+                </div>
+
+                <div class="feature-strip-card">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Integration Logging</div>
+                        <div class="feature-sub">Tracks API events and HTTP diagnostics</div>
+                    </div>
+                </div>
+
+                <div class="feature-strip-card">
+                    <div class="feature-icon">✓</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Automated Testing</div>
+                        <div class="feature-sub">High Apex coverage and strict validation</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Case Detail & Integration Log Modal -->
             <template if:true={isModalOpen}>
                 <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open case-details-modal-override" aria-labelledby="modal-heading-01" aria-modal="true">
                     <div class="slds-modal__container modal-container-wide">
@@ -360,6 +668,42 @@
                                                 </div>
                                                 <div class="summary-card-body">
                                                     <span class="external-id-value">{selectedCaseExternalIdFormatted}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Customer Details Panel -->
+                                        <div class="modal-section">
+                                            <div class="modal-section-label">
+                                                <lightning-icon icon-name="utility:people" size="x-small" class="section-icon"></lightning-icon>
+                                                <span>CUSTOMER DETAILS</span>
+                                            </div>
+                                            <div class="customer-info-box">
+                                                <div class="customer-grid">
+                                                    <div class="customer-item">
+                                                        <span class="customer-label">Customer ID</span>
+                                                        <span class="customer-value font-mono">{selectedCaseCustomerId}</span>
+                                                    </div>
+                                                    <div class="customer-item">
+                                                        <span class="customer-label">Customer Name</span>
+                                                        <span class="customer-value font-bold">{selectedCaseCustomerName}</span>
+                                                    </div>
+                                                    <div class="customer-item">
+                                                        <span class="customer-label">Email</span>
+                                                        <span class="customer-value">{selectedCaseCustomerEmail}</span>
+                                                    </div>
+                                                    <div class="customer-item">
+                                                        <span class="customer-label">Phone</span>
+                                                        <span class="customer-value">{selectedCaseCustomerPhone}</span>
+                                                    </div>
+                                                    <div class="customer-item">
+                                                        <span class="customer-label">Company / Account</span>
+                                                        <span class="customer-value">{selectedCaseAccountName}</span>
+                                                    </div>
+                                                    <div class="customer-item">
+                                                        <span class="customer-label">Customer Status</span>
+                                                        <span class="customer-value font-bold text-success">Active Customer</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -471,7 +815,7 @@
                 <div class="slds-backdrop slds-backdrop_open"></div>
             </template>
 
-            <!-- Close Case Resolution Notes Prompt Modal -->
+            <!-- 8. Close Case Resolution Notes Prompt Modal -->
             <template if:true={isCloseModalOpen}>
                 <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open" aria-labelledby="modal-heading-02" aria-modal="true">
                     <div class="slds-modal__container">
