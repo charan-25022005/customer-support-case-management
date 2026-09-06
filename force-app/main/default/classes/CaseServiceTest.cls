@@ -268,4 +268,39 @@ private class CaseServiceTest {
         System.assertEquals(null, workingCase.Resolved_By__c);
         System.assertEquals(null, workingCase.Resolved_Date__c);
     }
+
+    @isTest
+    static void testGetCaseActivities() {
+        User tUser = getTestUser();
+        Case c = new Case(
+            Subject = 'Activity Test Case',
+            Priority = 'Medium',
+            Status = 'New'
+        );
+        insert c;
+
+        Task t = new Task(
+            WhatId = c.Id,
+            Subject = 'Call Customer to Verify Issue',
+            Status = 'Completed',
+            Priority = 'Normal',
+            ActivityDate = Date.today(),
+            Description = 'Contacted customer by phone and verified symptoms.'
+        );
+        insert t;
+
+        List<Task> activities;
+        List<Task> emptyActivities;
+        Test.startTest();
+        System.runAs(tUser) {
+            activities = CaseService.getCaseActivities(c.Id);
+            emptyActivities = CaseService.getCaseActivities(null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, activities.size(), 'Should return 1 related activity');
+        System.assertEquals('Call Customer to Verify Issue', activities[0].Subject);
+        System.assertEquals('Completed', activities[0].Status);
+        System.assertEquals(0, emptyActivities.size(), 'Should return empty list for null caseId');
+    }
 }

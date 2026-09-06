@@ -3,6 +3,7 @@ import getCases from '@salesforce/apex/CaseService.getCases';
 import getCaseDetails from '@salesforce/apex/CaseService.getCaseDetails';
 import updateCaseStatus from '@salesforce/apex/CaseService.updateCaseStatus';
 import getIntegrationLogs from '@salesforce/apex/CaseService.getIntegrationLogs';
+import getCaseActivities from '@salesforce/apex/CaseService.getCaseActivities';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
@@ -26,15 +27,6 @@ const COLUMNS = [
     }
 ];
 
-const LOG_COLUMNS = [
-    { label: 'Log Name', fieldName: 'Name', type: 'text' },
-    { label: 'Service', fieldName: 'Service_Name__c', type: 'text' },
-    { label: 'Status Code', fieldName: 'Status_Code__c', type: 'number' },
-    { label: 'Status', fieldName: 'Status__c', type: 'text' },
-    { label: 'Execution Time (ms)', fieldName: 'Execution_Time_ms__c', type: 'number' },
-    { label: 'Created Date', fieldName: 'CreatedDate', type: 'date' }
-];
-
 export default class CaseManagement extends LightningElement {
     @track searchTerm = '';
     @track priorityFilter = 'ALL';
@@ -43,9 +35,21 @@ export default class CaseManagement extends LightningElement {
     @track rawCases = [];
     @track isLoading = true;
 
+    // Active Spotlight Case in 3x2 Grid
+    @track activeCaseId = null;
+    @track activeCase = null;
+    @track activeLogs = [];
+    @track formattedActiveLogs = [];
+    @track activeActivities = [];
+    @track formattedActiveActivities = [];
+    @track isLoadingActive = false;
+
+    // Modal State
     @track selectedCase = null;
     @track integrationLogs = [];
     @track formattedLogs = [];
+    @track modalActivities = [];
+    @track formattedModalActivities = [];
     @track isModalOpen = false;
     @track isCloseModalOpen = false;
     @track pendingCloseCaseId = null;
@@ -55,9 +59,7 @@ export default class CaseManagement extends LightningElement {
     @track openMenuRowId = null;
 
     wiredCasesResult;
-
     columns = COLUMNS;
-    logColumns = LOG_COLUMNS;
 
     priorityOptions = [
         { label: 'All Priorities', value: 'ALL' },
@@ -85,6 +87,7 @@ export default class CaseManagement extends LightningElement {
                 const isVip = c.Is_VIP__c === true;
                 const status = c.Status || 'New';
                 const priority = c.Priority || 'Low';
+                const isSelected = this.activeCaseId === c.Id;
 
                 return {
                     ...c,
@@ -93,9 +96,28 @@ export default class CaseManagement extends LightningElement {
                     isVip: isVip,
                     statusBadgeClass: this.getStatusBadgeClass(status),
                     priorityBadgeClass: this.getPriorityBadgeClass(priority),
-                    isMenuOpen: this.openMenuRowId === c.Id
+                    isMenuOpen: this.openMenuRowId === c.Id,
+                    rowClass: isSelected ? 'table-row-selected' : 'table-row'
                 };
             });
+
+            // Set initial active case if none selected or if active case no longer exists
+            if (this.cases.length > 0) {
+                const exists = this.cases.some(c => c.Id === this.activeCaseId);
+                if (!this.activeCaseId || !exists) {
+                    this.setActiveCase(this.cases[0].Id, this.cases[0].External_Case_Id__c);
+                } else {
+                    // Refresh current active case data
+                    this.loadActiveCaseDetails(this.activeCaseId);
+                }
+            } else {
+                this.activeCaseId = null;
+                this.activeCase = null;
+                this.activeLogs = [];
+                this.formattedActiveLogs = [];
+                this.activeActivities = [];
+                this.formattedActiveActivities = [];
+            }
             this.isLoading = false;
         } else if (result.error) {
             this.showToast('Error loading cases', result.error.body ? result.error.body.message : 'Unknown error', 'error');
@@ -128,14 +150,241 @@ export default class CaseManagement extends LightningElement {
         return 'pill-badge badge-priority-low';
     }
 
-    get hasCases() {
-        return this.cases && this.cases.length > 0;
+    formatDate(rawDate) {
+        if (!rawDate) return 'Not available';
+        try {
+            const dt = new Date(rawDate);
+            return dt.toLocaleString('en-US', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (e) {
+            return rawDate;
+        }
     }
 
-    get hasLogs() {
-        return this.formattedLogs && this.formattedLogs.length > 0;
+    formatLogs(logs) {
+        if (!logs) return [];
+        return logs.map(log => {
+            const isSuccess = log.Status__c === 'Success' || (log.Status_Code__c >= 200 && log.Status_Code__c < 300);
+            return {
+                ...log,
+                isSuccess: isSuccess,
+                iconName: isSuccess ? 'utility:check' : 'utility:error',
+                timelineIconClass: isSuccess ? 'timeline-status-icon success' : 'timeline-status-icon error',
+                timelineBadgeClass: isSuccess ? 'timeline-http-badge success' : 'timeline-http-badge error',
+                statusBadgeText: isSuccess 
+                    ? `✓ SUCCESS ${log.Status_Code__c ? '• HTTP ' + log.Status_Code__c : ''}` 
+                    : `✕ FAILED ${log.Status_Code__c ? '• HTTP ' + log.Status_Code__c : ''}`,
+                errorMessage: log.Error_Message__c,
+                executionTime: log.Execution_Time_ms__c ? `${log.Execution_Time_ms__c}ms` : '0ms',
+                formattedDate: this.formatDate(log.CreatedDate)
+            };
+        });
     }
 
+    formatActivities(activities) {
+        if (!activities) return [];
+        return activities.map(act => {
+            const isCompleted = act.Status === 'Completed';
+            return {
+                ...act,
+                isCompleted: isCompleted,
+                iconName: isCompleted ? 'utility:task2' : 'utility:clock',
+                activityBadgeClass: isCompleted ? 'activity-badge completed' : 'activity-badge in-progress',
+                ownerName: act.Owner ? act.Owner.Name : 'Support Agent',
+                formattedDate: act.ActivityDate ? act.ActivityDate : this.formatDate(act.CreatedDate),
+                descriptionText: act.Description ? act.Description : 'No activity details recorded.'
+            };
+        });
+    }
+
+    // Active Spotlight Case Helpers
+    setActiveCase(caseId, externalCaseId) {
+        this.activeCaseId = caseId;
+        this.loadActiveCaseDetails(caseId, externalCaseId);
+        this.updateCasesSelectionState();
+    }
+
+    loadActiveCaseDetails(caseId, externalCaseId) {
+        if (!caseId) return;
+        this.isLoadingActive = true;
+        getCaseDetails({ caseId: caseId })
+            .then(data => {
+                this.activeCase = data;
+                const extId = externalCaseId || (data ? data.External_Case_Id__c : null);
+                return Promise.all([
+                    extId ? getIntegrationLogs({ externalCaseId: extId }) : Promise.resolve([]),
+                    getCaseActivities({ caseId: caseId })
+                ]);
+            })
+            .then(([logs, activities]) => {
+                this.activeLogs = logs || [];
+                this.formattedActiveLogs = this.formatLogs(this.activeLogs);
+                this.activeActivities = activities || [];
+                this.formattedActiveActivities = this.formatActivities(this.activeActivities);
+            })
+            .catch(error => {
+                console.error('Error loading active case details:', error);
+            })
+            .finally(() => {
+                this.isLoadingActive = false;
+            });
+    }
+
+    updateCasesSelectionState() {
+        this.cases = this.cases.map(c => {
+            return {
+                ...c,
+                rowClass: (c.Id === this.activeCaseId) ? 'table-row-selected' : 'table-row'
+            };
+        });
+    }
+
+    handleSelectCase(event) {
+        const caseId = event.currentTarget.dataset.id;
+        const externalId = event.currentTarget.dataset.externalid;
+        if (caseId && caseId !== this.activeCaseId) {
+            this.setActiveCase(caseId, externalId);
+        }
+    }
+
+    // Active Case Getters
+    get hasActiveCase() {
+        return this.activeCase != null;
+    }
+
+    get activeCaseNumber() {
+        return this.activeCase ? this.activeCase.CaseNumber : '';
+    }
+
+    get activeCaseSubject() {
+        return this.activeCase ? this.activeCase.Subject : 'No Case Selected';
+    }
+
+    get activeCaseStatus() {
+        return this.activeCase ? this.activeCase.Status : 'New';
+    }
+
+    get activeCasePriority() {
+        return this.activeCase ? this.activeCase.Priority : 'Low';
+    }
+
+    get activeCaseIsVip() {
+        return this.activeCase && this.activeCase.Is_VIP__c === true;
+    }
+
+    get activeCaseOwnerName() {
+        return this.activeCase && this.activeCase.Owner ? this.activeCase.Owner.Name : 'Unassigned';
+    }
+
+    get activeCaseOwnerInitials() {
+        return this.getInitials(this.activeCaseOwnerName);
+    }
+
+    get activeCaseExternalId() {
+        return (this.activeCase && this.activeCase.External_Case_Id__c && this.activeCase.External_Case_Id__c.trim())
+            ? this.activeCase.External_Case_Id__c
+            : 'Not available';
+    }
+
+    get activeCaseDescription() {
+        return (this.activeCase && this.activeCase.Description && this.activeCase.Description.trim())
+            ? this.activeCase.Description
+            : 'No description provided for this case.';
+    }
+
+    get activeCaseStatusBadgeClass() {
+        return this.activeCase ? this.getStatusBadgeClass(this.activeCase.Status) : 'pill-badge badge-status-new';
+    }
+
+    get activeCasePriorityBadgeClass() {
+        return this.activeCase ? this.getPriorityBadgeClass(this.activeCase.Priority) : 'pill-badge badge-priority-low';
+    }
+
+    get activeCaseIsClosed() {
+        return this.activeCase && this.activeCase.Status === 'Closed';
+    }
+
+    get activeCaseResolutionSummary() {
+        if (!this.activeCase) return 'Historical Case';
+        return (this.activeCase.Resolution_Summary__c && this.activeCase.Resolution_Summary__c.trim())
+            ? this.activeCase.Resolution_Summary__c
+            : 'Historical Case';
+    }
+
+    get activeCaseResolutionNotes() {
+        if (!this.activeCase) return 'Resolution details were not captured when this Case was originally closed.';
+        return (this.activeCase.Resolution_Notes__c && this.activeCase.Resolution_Notes__c.trim())
+            ? this.activeCase.Resolution_Notes__c
+            : 'Resolution details were not captured when this Case was originally closed.';
+    }
+
+    get activeCaseResolvedByName() {
+        if (!this.activeCase) return 'Not available';
+        if (this.activeCase.Resolved_By__r && this.activeCase.Resolved_By__r.Name) {
+            return this.activeCase.Resolved_By__r.Name;
+        }
+        if (this.activeCase.Owner && this.activeCase.Owner.Name) {
+            return this.activeCase.Owner.Name;
+        }
+        return 'Not available';
+    }
+
+    get activeCaseResolvedDateFormatted() {
+        if (!this.activeCase) return 'Not available';
+        const rawDate = this.activeCase.Resolved_Date__c || this.activeCase.ClosedDate;
+        return this.formatDate(rawDate);
+    }
+
+    get activeCaseCustomerId() {
+        return (this.activeCase && this.activeCase.Customer_External_Id__c && this.activeCase.Customer_External_Id__c.trim())
+            ? this.activeCase.Customer_External_Id__c
+            : 'Not available';
+    }
+
+    get activeCaseCustomerName() {
+        return (this.activeCase && this.activeCase.Contact && this.activeCase.Contact.Name && this.activeCase.Contact.Name.trim())
+            ? this.activeCase.Contact.Name
+            : 'Not available';
+    }
+
+    get activeCaseCustomerEmail() {
+        return (this.activeCase && this.activeCase.Contact && this.activeCase.Contact.Email && this.activeCase.Contact.Email.trim())
+            ? this.activeCase.Contact.Email
+            : 'Not available';
+    }
+
+    get activeCaseCustomerPhone() {
+        return (this.activeCase && this.activeCase.Contact && this.activeCase.Contact.Phone && this.activeCase.Contact.Phone.trim())
+            ? this.activeCase.Contact.Phone
+            : 'Not available';
+    }
+
+    get activeCaseAccountName() {
+        return (this.activeCase && this.activeCase.Account && this.activeCase.Account.Name && this.activeCase.Account.Name.trim())
+            ? this.activeCase.Account.Name
+            : 'Not available';
+    }
+
+    get activeCaseCustomerType() {
+        if (!this.activeCase) return 'Standard Customer';
+        return this.activeCase.Is_VIP__c ? 'VIP Customer' : 'Standard Customer';
+    }
+
+    get hasActiveLogs() {
+        return this.formattedActiveLogs && this.formattedActiveLogs.length > 0;
+    }
+
+    get hasActiveActivities() {
+        return this.formattedActiveActivities && this.formattedActiveActivities.length > 0;
+    }
+
+    // Modal Specific Getters
     get isCaseClosed() {
         return this.selectedCase && this.selectedCase.Status === 'Closed';
     }
@@ -188,20 +437,7 @@ export default class CaseManagement extends LightningElement {
     get selectedCaseResolvedDateFormatted() {
         if (!this.selectedCase) return 'Not available';
         const rawDate = this.selectedCase.Resolved_Date__c || this.selectedCase.ClosedDate;
-        if (!rawDate) return 'Not available';
-        try {
-            const dt = new Date(rawDate);
-            return dt.toLocaleString('en-US', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            });
-        } catch (e) {
-            return rawDate;
-        }
+        return this.formatDate(rawDate);
     }
 
     get selectedCaseStatusBadgeClass() {
@@ -242,22 +478,73 @@ export default class CaseManagement extends LightningElement {
             : 'Not available';
     }
 
-    get selectedCaseCustomerType() {
-        if (!this.selectedCase) return 'Standard Customer';
-        return this.selectedCase.Is_VIP__c ? 'VIP Customer' : 'Standard Customer';
+    get hasCases() {
+        return this.cases && this.cases.length > 0;
     }
 
-    get selectedCaseCustomerStatus() {
-        return 'Active';
+    get hasLogs() {
+        return this.formattedLogs && this.formattedLogs.length > 0;
     }
 
+    get hasModalActivities() {
+        return this.formattedModalActivities && this.formattedModalActivities.length > 0;
+    }
+
+    // 5 KPI Metrics
     get metrics() {
-        let total = this.rawCases.length;
-        let open = this.rawCases.filter(c => c.Status !== 'Closed').length;
-        let closed = this.rawCases.filter(c => c.Status === 'Closed').length;
-        let highPriority = this.rawCases.filter(c => c.Priority === 'High').length;
-        let vip = this.rawCases.filter(c => c.Is_VIP__c === true).length;
+        const total = this.rawCases.length;
+        const open = this.rawCases.filter(c => c.Status !== 'Closed').length;
+        const closed = this.rawCases.filter(c => c.Status === 'Closed').length;
+        const highPriority = this.rawCases.filter(c => c.Priority === 'High').length;
+        const vip = this.rawCases.filter(c => c.Is_VIP__c === true).length;
         return { total, open, closed, highPriority, vip };
+    }
+
+    // Panel 6 Reporting & Distribution Metrics
+    get priorityDistribution() {
+        const total = this.rawCases.length || 1;
+        const highCount = this.rawCases.filter(c => c.Priority === 'High').length;
+        const mediumCount = this.rawCases.filter(c => c.Priority === 'Medium').length;
+        const lowCount = this.rawCases.filter(c => c.Priority === 'Low' || !c.Priority).length;
+
+        const highPercent = Math.round((highCount / total) * 100);
+        const mediumPercent = Math.round((mediumCount / total) * 100);
+        const lowPercent = Math.round((lowCount / total) * 100);
+
+        return {
+            highCount,
+            highPercent,
+            highStyle: `width: ${highPercent}%`,
+            mediumCount,
+            mediumPercent,
+            mediumStyle: `width: ${mediumPercent}%`,
+            lowCount,
+            lowPercent,
+            lowStyle: `width: ${lowPercent}%`
+        };
+    }
+
+    get statusDistribution() {
+        const total = this.rawCases.length || 1;
+        const newCount = this.rawCases.filter(c => c.Status === 'New' || !c.Status).length;
+        const workingCount = this.rawCases.filter(c => c.Status === 'Working' || c.Status === 'In Progress').length;
+        const closedCount = this.rawCases.filter(c => c.Status === 'Closed').length;
+
+        const newPercent = Math.round((newCount / total) * 100);
+        const workingPercent = Math.round((workingCount / total) * 100);
+        const closedPercent = Math.round((closedCount / total) * 100);
+
+        return {
+            newCount,
+            newPercent,
+            newStyle: `width: ${newPercent}%`,
+            workingCount,
+            workingPercent,
+            workingStyle: `width: ${workingPercent}%`,
+            closedCount,
+            closedPercent,
+            closedStyle: `width: ${closedPercent}%`
+        };
     }
 
     handleSearchChange(event) {
@@ -278,6 +565,9 @@ export default class CaseManagement extends LightningElement {
         refreshApex(this.wiredCasesResult)
             .finally(() => {
                 this.isLoading = false;
+                if (this.activeCaseId) {
+                    this.loadActiveCaseDetails(this.activeCaseId);
+                }
             });
     }
 
@@ -314,6 +604,9 @@ export default class CaseManagement extends LightningElement {
         switch (actionName) {
             case 'view_details':
                 this.openDetailModal(rowId, externalId);
+                break;
+            case 'select_case':
+                this.setActiveCase(rowId, externalId);
                 break;
             case 'close_case':
                 this.openCloseModal(rowId);
@@ -383,27 +676,34 @@ export default class CaseManagement extends LightningElement {
         this.changeCaseStatus(caseId, 'Closed', notes, summary);
     }
 
+    handleResolveActiveCase() {
+        if (this.activeCaseId) {
+            this.openCloseModal(this.activeCaseId);
+        }
+    }
+
+    handleOpenActiveCaseModal() {
+        if (this.activeCaseId) {
+            this.openDetailModal(this.activeCaseId, this.activeCase ? this.activeCase.External_Case_Id__c : null);
+        }
+    }
+
     openDetailModal(caseId, externalCaseId) {
         this.isLoading = true;
         getCaseDetails({ caseId: caseId })
             .then(data => {
                 this.selectedCase = data;
-                return getIntegrationLogs({ externalCaseId: externalCaseId });
+                const extId = externalCaseId || (data ? data.External_Case_Id__c : null);
+                return Promise.all([
+                    extId ? getIntegrationLogs({ externalCaseId: extId }) : Promise.resolve([]),
+                    getCaseActivities({ caseId: caseId })
+                ]);
             })
-            .then(logs => {
+            .then(([logs, activities]) => {
                 this.integrationLogs = logs || [];
-                this.formattedLogs = this.integrationLogs.map(log => {
-                    const isSuccess = log.Status__c === 'Success' || (log.Status_Code__c >= 200 && log.Status_Code__c < 300);
-                    return {
-                        ...log,
-                        isSuccess: isSuccess,
-                        iconName: isSuccess ? 'utility:check' : 'utility:error',
-                        timelineIconClass: isSuccess ? 'timeline-status-icon success' : 'timeline-status-icon error',
-                        timelineBadgeClass: isSuccess ? 'timeline-http-badge success' : 'timeline-http-badge error',
-                        statusBadgeText: isSuccess ? `✓ Success ${log.Status_Code__c ? '• HTTP ' + log.Status_Code__c : ''}` : `✕ Failed ${log.Status_Code__c ? '• HTTP ' + log.Status_Code__c : ''}`,
-                        errorMessage: log.Error_Message__c
-                    };
-                });
+                this.formattedLogs = this.formatLogs(this.integrationLogs);
+                this.modalActivities = activities || [];
+                this.formattedModalActivities = this.formatActivities(this.modalActivities);
                 this.isModalOpen = true;
             })
             .catch(error => {
@@ -419,6 +719,8 @@ export default class CaseManagement extends LightningElement {
         this.selectedCase = null;
         this.integrationLogs = [];
         this.formattedLogs = [];
+        this.modalActivities = [];
+        this.formattedModalActivities = [];
     }
 
     changeCaseStatus(caseId, newStatus, resolutionNotes = null, resolutionSummary = null) {
@@ -429,6 +731,9 @@ export default class CaseManagement extends LightningElement {
                     ? 'Case closed successfully with resolution details.' 
                     : `Case status updated to ${newStatus}`;
                 this.showToast('Success', toastMsg, 'success');
+                if (this.activeCaseId === caseId) {
+                    this.loadActiveCaseDetails(caseId);
+                }
                 return refreshApex(this.wiredCasesResult);
             })
             .catch(error => {

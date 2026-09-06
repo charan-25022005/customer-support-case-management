@@ -193,4 +193,19 @@ public with sharing class CaseService {
             LIMIT 20
         ];
     }
+
+    @AuraEnabled(cacheable=true)
+    public static List<Task> getCaseActivities(String caseId) {
+        if (String.isBlank(caseId)) {
+            return new List<Task>();
+        }
+        return [
+            SELECT Id, Subject, Status, Priority, ActivityDate, CreatedDate, Owner.Name, Description
+            FROM Task
+            WHERE WhatId = :caseId
+            WITH SECURITY_ENFORCED
+            ORDER BY CreatedDate DESC
+            LIMIT 20
+        ];
+    }
 }
